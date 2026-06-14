@@ -16,7 +16,7 @@ Nota de alcance: la otra spec deja "cancelaciones" fuera de alcance refiriéndos
 
 ## Contenido y layout (aprobado vía mockup)
 
-Una sola página con scroll, nav superior con anchors. 3 secciones de contenido:
+Una sola página con scroll, nav superior con anchors. Contenido:
 
 1. **Header**: nombre del negocio (`clientes.nombre`), saludo a la empleada, fecha de hoy.
 2. **Turnos**: pestañas *Próximos* / *Historial*, agrupados por fecha. Cada fila: hora, mascota (nombre + raza + badge de tamaño), dueño/a, servicio, precio, observaciones. En *Próximos*, botón "Cancelar" por fila. En *Historial*, badge "Confirmado" / "Cancelado".
