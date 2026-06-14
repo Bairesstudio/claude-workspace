@@ -52,6 +52,11 @@ WF4 - Cancelar turno (panel)
     → Respond 200 { ok: true }
 ```
 
+Implementado: WF4 está creado y publicado en n8n como "Cancelar Turno (Panel)".
+Webhook: `POST https://bairesstudio.app.n8n.cloud/webhook/pajaro-loco-cancelar-turno`
+con body `{ "turno_id": "<uuid>" }`, responde `{ "ok": true }`. Esta es la URL
+que debe usar el botón "Cancelar" del panel (Lovable).
+
 Manejo de errores: Supabase es la fuente de verdad. Si `Update Turno` tiene éxito pero `Delete event` falla (ej. el evento ya no existe), el turno queda igual marcado `cancelado` — el borrado de Calendar es best-effort y no revierte el estado. Si `Update Turno` falla, se responde error y el panel no marca la fila como cancelada (muestra un toast de error y deja el botón "Cancelar" activo).
 
 En el panel, el botón "Cancelar" pide confirmación (ej. modal "¿Cancelar el turno de Rocky a las 10:00?") antes de llamar al webhook — el mockup no la tiene por simplicidad, pero la versión real sí.
