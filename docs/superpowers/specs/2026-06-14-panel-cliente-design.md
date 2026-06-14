@@ -118,9 +118,11 @@ SECCIONES:
    - Cada fila: hora (desde inicio_minutos), mascota_nombre + mascota_raza + badge
      de mascota_tamano, nombre_cliente, nombre del servicio, precio_servicio,
      observaciones si existe
-   - Cada fila de Próximos tiene un botón "Cancelar": pide confirmación, y si se
-     confirma llama al webhook de WF4 (n8n) pasando el id del turno; si responde
-     ok, marcar la fila como cancelada visualmente; si falla, mostrar error y no
+   - Cada fila de Próximos tiene un botón "Cancelar": pide confirmación
+     (ej. "¿Cancelar el turno de Rocky a las 10:00?"), y si se confirma hace
+     POST a https://bairesstudio.app.n8n.cloud/webhook/pajaro-loco-cancelar-turno
+     con body { "turno_id": "<id del turno>" }; si responde { ok: true },
+     marcar la fila como cancelada visualmente; si falla, mostrar error y no
      cambiar nada
    - Historial: turnos where cliente_id=X and fecha < hoy, orden desc, mismo
      formato de fila pero con badge "Confirmado" o "Cancelado" según
