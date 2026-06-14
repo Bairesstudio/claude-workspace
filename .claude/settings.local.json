@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "PowerShell(Get-Command claude -ErrorAction SilentlyContinue)",
+      "PowerShell(Get-Command npm -ErrorAction SilentlyContinue)",
+      "PowerShell(try { \\(Get-Command claude\\).Source } catch { \"claude: not found\" }; try { \\(Get-Command npm\\).Source } catch { \"npm: not found\" }; try { \\(Get-Command node\\).Source } catch { \"node: not found\" })",
+      "Bash(git init *)",
+      "Bash(git config *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git branch *)"
+    ]
+  }
+}
