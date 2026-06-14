@@ -10,7 +10,7 @@ Primer cliente real: **Pajaro Loco Pet Store**, vía `/panel/pajaro-loco` (URL y
 
 Mockup de referencia (aprobado): [docs/mockups/panel-pajaro-loco.html](../../mockups/panel-pajaro-loco.html) — estilo "SSJ3" (fondo casi negro, acentos dorados con glow, tipografía Russo One + Inter).
 
-Relación con [2026-06-14-conectar-supabase-n8n-design.md](2026-06-14-conectar-supabase-n8n-design.md): el panel lee y escribe Supabase **directo desde Lovable**, no pasa por n8n (salvo para cancelar turnos, ver más abajo) — se puede construir en paralelo a la migración de WF1-3. Sí depende de que `turnos` tenga datos reales: hasta que WF2 escriba en Supabase, el panel muestra datos vacíos o de prueba (los del seed).
+Relación con [2026-06-14-conectar-supabase-n8n-design.md](2026-06-14-conectar-supabase-n8n-design.md): el panel lee y escribe Supabase **directo desde Lovable**, no pasa por n8n (salvo para cancelar y editar turnos, ver más abajo) — se puede construir en paralelo a la migración de WF1-3. Sí depende de que `turnos` tenga datos reales: hasta que WF2 escriba en Supabase, el panel muestra datos vacíos o de prueba (los del seed).
 
 Nota de alcance: la otra spec deja "cancelaciones" fuera de alcance refiriéndose al flujo *del cliente final* (cancelar desde el mail de confirmación, roadmap mediano plazo). Esta spec cubre cancelar *desde el panel* (acción de la dueña/empleada) — un flujo distinto, aunque comparten el mecanismo de fondo.
 
@@ -19,7 +19,7 @@ Nota de alcance: la otra spec deja "cancelaciones" fuera de alcance refiriéndos
 Una sola página con scroll, nav superior con anchors. Contenido:
 
 1. **Header**: nombre del negocio (`clientes.nombre`), saludo a la empleada, fecha de hoy.
-2. **Turnos**: pestañas *Próximos* / *Historial*, agrupados por fecha. Cada fila: hora, mascota (nombre + raza + badge de tamaño), dueño/a, servicio, precio, observaciones. En *Próximos*, botón "Cancelar" por fila. En *Historial*, badge "Confirmado" / "Cancelado".
+2. **Turnos**: pestañas *Próximos* / *Historial*, agrupados por fecha. Cada fila: hora, mascota (nombre + raza + badge de tamaño), dueño/a, servicio, precio, observaciones. En *Próximos*, botones "Editar" y "Cancelar" por fila. En *Historial*, badge "Confirmado" / "Cancelado".
 3. **Métricas del mes**: cards de turnos totales y facturación estimada, + desglose por servicio con barras proporcionales (misma lógica que WF3, pero del mes en curso en vez del mes cerrado).
 4. **Servicios y precios**: tabla servicio × tamaño con precio editable + botón "Guardar cambios".
 
@@ -29,7 +29,7 @@ Estilo visual: fondo casi negro (`#0b0b0d`) con glow radial dorado/naranja, acen
 
 Resolución de cliente (mismo patrón que los workflows): `select id, nombre, mail_dueno from clientes where slug = 'pajaro-loco'` → `cliente_id`.
 
-Lovable habla con Supabase directo (vía `anon` key + RLS, ver sección siguiente) para **todas las lecturas** y para **editar precios**. La única excepción es **cancelar turno**, que pasa por un webhook de n8n nuevo porque tiene un efecto en Google Calendar.
+Lovable habla con Supabase directo (vía `anon` key + RLS, ver sección siguiente) para **todas las lecturas** y para **editar precios**. Las excepciones son **cancelar turno** (WF4) y **editar turno** (WF5), que pasan por webhooks de n8n porque tienen efecto en Google Calendar.
 
 | Sección | Query | Notas |
 |---|---|---|
@@ -61,6 +61,42 @@ Manejo de errores: Supabase es la fuente de verdad. Si `Update Turno` tiene éxi
 
 En el panel, el botón "Cancelar" pide confirmación (ej. modal "¿Cancelar el turno de Rocky a las 10:00?") antes de llamar al webhook — el mockup no la tiene por simplicidad, pero la versión real sí.
 
+### Editar turno → WF5 (nuevo)
+
+Permite a la dueña reprogramar un turno (fecha, hora y/o empleado) sin pasar por el equipo ni tocar Google Calendar a mano. Alcance v1: solo fecha/hora/empleado — servicio, precio, duración y datos de la mascota no cambian (si hace falta cambiar el servicio, se cancela el turno y se crea uno nuevo).
+
+```
+WF5 - Editar turno (panel)
+  Webhook (recibe turno_id, fecha, hora, empleado_id)
+    → Get Turno          (Supabase SELECT turnos WHERE id=:turno_id,
+                           trae cliente_id, duracion_minutos, calendar_event_id)
+    → Build New Slot     (Code: nuevo_inicio_minutos = hora→minutos;
+                           nuevo_fin_minutos = nuevo_inicio_minutos + duracion_minutos)
+    → Get Turnos del día (Supabase SELECT turnos WHERE cliente_id=:cliente_id
+                           AND empleado_id=:empleado_id AND fecha=:fecha
+                           AND estado='confirmado' AND id != :turno_id)
+    → Check Overlap      (Code: misma fórmula que WF1 —
+                           nuevo_inicio < existente_fin AND nuevo_fin > existente_inicio)
+    → IF ocupado
+         sí → Respond 400 { ok: false, message: "Ese horario ya está ocupado, elegí otro." }
+         no → Update Turno (Supabase UPDATE turnos SET fecha, inicio_minutos,
+                             fin_minutos, empleado_id WHERE id=:turno_id)
+              → IF calendar_event_id existe
+                   sí → Update event (Google Calendar, operation "update":
+                         recalcula start/end con nueva fecha+hora+duracion_minutos,
+                         misma fórmula de fecha/timezone que "Create an event" en WF2)
+                   no → (nada)
+              → Respond 200 { ok: true }
+```
+
+`fecha` en formato `YYYY-MM-DD`, `hora` en `HH:mm` — mismo contrato que el formulario de reserva original. El filtro `id != :turno_id` en "Get Turnos del día" es necesario para que el turno no choque contra sí mismo.
+
+El evento de Google Calendar (calendario único `ultraguschi@gmail.com`) no incluye el nombre del empleado en su `summary`/`description` — por eso cambiar solo `empleado_id` no requiere tocar Calendar; alcanza con actualizar `turnos.empleado_id`. Si cambia `fecha`/`hora`, "Update event" recalcula `start`/`end`; si el horario nuevo coincide con el actual la operación es igualmente válida (idempotente), no hace falta comparar antes de decidir si llamarla.
+
+Manejo de errores: mismo criterio que WF4 — Supabase es la fuente de verdad. Si hay overlap, no se modifica nada (ni Supabase ni Calendar) y se responde 400. Si `Update Turno` tiene éxito pero `Update event` falla (ej. el evento ya no existe en Calendar), el turno queda igual con los nuevos datos en Supabase — la sincronización de Calendar es best-effort.
+
+En el panel, el botón "Editar" abre un modal con fecha/hora/empleado precargados (empleado vía `select id, nombre from empleados where cliente_id=X`). Si la respuesta es `{ ok: false, message }`, el mensaje se muestra dentro del modal y queda abierto para reintentar con otro horario. Si `{ ok: true }`, se cierra el modal y se refresca la lista completa de turnos (el turno editado puede cambiar de grupo de fecha, o pasar a Historial si quedó en el pasado).
+
 ### Editar precio → directo
 
 `update servicios set precio=:nuevo_precio where id=:servicio_id and cliente_id=:id`, sin dependencias externas, no pasa por n8n.
@@ -83,6 +119,7 @@ Riesgo aceptado y documentado: quien conozca la URL `/panel/pajaro-loco` y la `a
 - Datos de prueba ya existen vía `sheets/seed-pajaro-loco.sql`.
 - Lovable: apuntar el preview al mismo proyecto Supabase y verificar las 4 secciones contra esos datos.
 - WF4: probar con el trigger manual de n8n pasando un `turno_id` real, confirmar que `turnos.estado` cambia a `cancelado` y que el evento desaparece del Google Calendar de Soledad.
+- WF5: probar con un `turno_id` real cambiando fecha/hora/empleado, confirmar que `turnos` se actualiza y que el evento se mueve en el Google Calendar de Soledad. Probar también un caso de overlap (debe responder 400 sin modificar Supabase ni Calendar).
 
 ## Prompt para Lovable
 
@@ -124,6 +161,13 @@ SECCIONES:
      con body { "turno_id": "<id del turno>" }; si responde { ok: true },
      marcar la fila como cancelada visualmente; si falla, mostrar error y no
      cambiar nada
+   - Cada fila de Próximos tiene también un botón "Editar": abre un modal con
+     fecha, hora y empleado precargados (lista de empleados desde
+     select id, nombre from empleados where cliente_id=X). Al guardar, hace
+     POST al webhook de WF5 (n8n) pasando { turno_id, fecha, hora, empleado_id };
+     si responde { ok: true }, cerrar el modal y refrescar la lista de turnos;
+     si responde { ok: false, message }, mostrar el mensaje dentro del modal sin
+     cerrarlo; si falla la llamada, mostrar error y no cambiar nada
    - Historial: turnos where cliente_id=X and fecha < hoy, orden desc, mismo
      formato de fila pero con badge "Confirmado" o "Cancelado" según
      turnos.estado, sin botón de acción
@@ -148,7 +192,7 @@ SECCIONES:
 ## Fuera de alcance
 
 - Login / Supabase Auth para el panel (se evalúa en "Onboarding multi-cliente").
-- Editar turnos existentes (hora, servicio, mascota) — solo cancelar.
+- Editar servicio, precio o datos de la mascota de un turno existente — WF5 solo permite cambiar fecha, hora y empleado (ver "Editar turno → WF5").
 - Alta de nuevos servicios o empleados desde el panel — solo editar precio de servicios existentes.
 - Cancelación desde el lado del cliente final (mail de confirmación) — roadmap mediano plazo, ítem separado.
 - Notificaciones / recordatorios.
