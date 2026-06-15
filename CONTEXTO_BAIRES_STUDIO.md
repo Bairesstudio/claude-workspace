@@ -72,8 +72,29 @@ El formulario de `pajaro-loco-spa.lovable.app` se modificó para:
 ## Zona horaria del Calendar
 El evento se crea con hora correcta en UTC absoluto (ej: turno 10:00 → 13:00 UTC, correcto para Argentina UTC-3). Si el usuario ve el evento con 1 hora de diferencia en Google Calendar, es porque la cuenta `ultraguschi@gmail.com` tiene configurada una zona horaria diferente a `America/Argentina/Buenos_Aires`. Fix: en Google Calendar → Configuración → Zona horaria → seleccionar "(UTC-03:00) Buenos Aires".
 
-## Próximo paso
-Confirmar si el calendario `ultraguschi@gmail.com` usado en WF2 → "Create an event" es el calendario correcto del negocio (Pajaro Loco) o si hay que cambiarlo antes de que el cliente beta empiece a usar el sistema en serio.
+## Roadmap acordado
+
+### Fase 1 — Beta lista (prioridad inmediata)
+1. Desplegar dashboard a Vercel o Netlify (hoy solo corre en localhost)
+2. Confirmar E2E real desde el formulario Lovable en el browser
+3. Cambiar `mail_dueno` y calendar a los datos reales del negocio (hoy apuntan a cuentas de prueba)
+4. Bugs pendientes en Lovable: filtro de servicios por tamaño, bache de horarios, detalles estéticos
+
+### Fase 2 — Producto real (post-beta)
+1. **Multi-tenant real**: parametrizar workflows de n8n (hoy "pajaro-loco" hardcodeado), dashboard por cliente con su propia URL, vincular Calendar/Gmail propio de cada cliente
+2. **Autenticación robusta** en el dashboard: cada dueño ve solo sus datos
+3. **Plantillas de mail HTML**: reemplazar los mails de texto plano por diseño profesional
+4. **Panel admin Baires Studio**: vista de todos los clientes, métricas globales, facturación
+5. **Onboarding self-service**: nuevo cliente completa un form → se crea todo automáticamente en Supabase + n8n + subdominio de dashboard, sin tocar código
+
+### Fuera de scope por ahora (descartado)
+- Recordatorio automático 24hs antes
+- Cancelación desde el mail del cliente
+- Integración de pagos
+- WhatsApp Business API
+- App mobile / PWA
+- Múltiples empleados con calendarios independientes
+- Reseñas post-turno
 
 ## Mails de prueba al mail personal (temporal)
 `clientes.mail_dueno` (pajaro-loco) se cambió de `flown8n2020@outlook.com` a `flown8n2026@outlook.com` — mail personal del usuario para no llenar de mails de prueba el mail de la empresa. Recordar que esto es temporal ("por ahora"); cuando se pase a producción real con el cliente, hay que volver a poner el mail del dueño del negocio.
