@@ -1,0 +1,39 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "PowerShell(Get-Command claude -ErrorAction SilentlyContinue)",
+      "PowerShell(Get-Command npm -ErrorAction SilentlyContinue)",
+      "PowerShell(try { \\(Get-Command claude\\).Source } catch { \"claude: not found\" }; try { \\(Get-Command npm\\).Source } catch { \"npm: not found\" }; try { \\(Get-Command node\\).Source } catch { \"node: not found\" })",
+      "Bash(git init *)",
+      "Bash(git config *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git branch *)",
+      "Bash(git stash *)",
+      "Bash(git diff *)",
+      "Bash(git checkout *)",
+      "Bash(git apply *)",
+      "Bash(npm run *)",
+      "Bash(npx tsc *)",
+      "Bash(awk '/## Task 2/,/## Task 3/' \"docs/superpowers/plans/2026-06-15-dashboard-visual-polish.md\")",
+      "Bash(node -e \"try { console.log\\(require\\('lucide-react/package.json'\\).version\\) } catch\\(e\\) { console.log\\('NOT INSTALLED'\\) }\")",
+      "Bash(npm install *)",
+      "Bash(NODE_OPTIONS=\"--use-system-ca\" npm install lucide-react)",
+      "Bash(node -e \"console.log\\(require\\('lucide-react/package.json'\\).version\\)\")",
+      "Bash(node -e \"const m = require\\('./node_modules/lucide-react/dist/cjs/lucide-react.js'\\); console.log\\('Calendar:', typeof m.Calendar, '| CalendarRange:', typeof m.CalendarRange, '| History:', typeof m.History, '| BarChart3:', typeof m.BarChart3\\)\")",
+      "Bash(node -e ' *)",
+      "Bash(echo \"EXIT=$?\")",
+      "Bash(npx eslint *)",
+      "PowerShell(npm install *)",
+      "Bash(grep -c framer-motion package.json)",
+      "Bash(ls node_modules/framer-motion)",
+      "Bash(break)",
+      "Bash(git status *)",
+      "Bash(git worktree *)",
+      "Read(//tmp/oldworktree/**)",
+      "Bash(cp -r \"D:/Claude Workspace/dashboard/node_modules\" ./node_modules)",
+      "Bash(ls node_modules/.bin/eslint*)"
+    ]
+  }
+}
