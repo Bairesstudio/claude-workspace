@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(gh auth status*)",
+      "Bash(npm config get *)"
+    ]
+  }
+}
