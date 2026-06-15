@@ -50,7 +50,7 @@ export function Metricas() {
                 <XAxis dataKey="nombre" tick={{ fontSize: 12 }} />
                 <YAxis tick={{ fontSize: 12 }} />
                 <Tooltip formatter={(value: number) => formatoPrecio.format(value)} />
-                <Bar dataKey="total" fill="#7c3aed" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="total" fill="var(--color-primary)" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -64,7 +64,7 @@ export function Metricas() {
                 <XAxis dataKey="nombre" tick={{ fontSize: 12 }} />
                 <YAxis tick={{ fontSize: 12 }} />
                 <Tooltip formatter={(value: number) => formatoPrecio.format(value)} />
-                <Bar dataKey="total" fill="#0ea5e9" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="total" fill="var(--color-accent)" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
