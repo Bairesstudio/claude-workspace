@@ -1,10 +1,11 @@
 import { NavLink } from 'react-router-dom';
+import { Calendar, CalendarRange, History, BarChart3 } from 'lucide-react';
 
 const links = [
-  { to: '/', label: 'Hoy', icon: '📅' },
-  { to: '/proximos', label: 'Próximos', icon: '🗓️' },
-  { to: '/historial', label: 'Historial', icon: '🕓' },
-  { to: '/metricas', label: 'Métricas', icon: '📊' },
+  { to: '/', label: 'Hoy', icon: Calendar },
+  { to: '/proximos', label: 'Próximos', icon: CalendarRange },
+  { to: '/historial', label: 'Historial', icon: History },
+  { to: '/metricas', label: 'Métricas', icon: BarChart3 },
 ];
 
 export function Sidebar() {
@@ -15,11 +16,11 @@ export function Sidebar() {
         <p className="text-sm text-gray-500">Panel de turnos</p>
       </div>
       <nav className="flex flex-col gap-1 px-3">
-        {links.map((link) => (
+        {links.map(({ to, label, icon: Icon }) => (
           <NavLink
-            key={link.to}
-            to={link.to}
-            end={link.to === '/'}
+            key={to}
+            to={to}
+            end={to === '/'}
             className={({ isActive }) =>
               `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                 isActive
@@ -28,8 +29,8 @@ export function Sidebar() {
               }`
             }
           >
-            <span aria-hidden="true">{link.icon}</span>
-            {link.label}
+            <Icon size={18} aria-hidden="true" />
+            {label}
           </NavLink>
         ))}
       </nav>
