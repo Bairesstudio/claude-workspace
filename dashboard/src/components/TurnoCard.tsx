@@ -15,7 +15,7 @@ const formatoPrecio = new Intl.NumberFormat('es-AR', {
 
 export function TurnoCard({ turno, onCancelar, onReprogramar, showEstado }: TurnoCardProps) {
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md sm:flex-row sm:items-center sm:justify-between">
       <div className="flex items-start gap-4">
         <div className="flex h-14 w-16 flex-col items-center justify-center rounded-lg bg-primary-light text-primary-dark">
           <span className="text-sm font-semibold">{turno.hora}</span>
@@ -47,7 +47,7 @@ export function TurnoCard({ turno, onCancelar, onReprogramar, showEstado }: Turn
         {onReprogramar && (
           <button
             onClick={() => onReprogramar(turno)}
-            className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+            className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
           >
             Reprogramar
           </button>
@@ -55,7 +55,7 @@ export function TurnoCard({ turno, onCancelar, onReprogramar, showEstado }: Turn
         {onCancelar && (
           <button
             onClick={() => onCancelar(turno)}
-            className="rounded-lg border border-red-200 px-3 py-1.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
+            className="rounded-lg border border-red-200 px-3 py-1.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger focus-visible:ring-offset-2"
           >
             Cancelar
           </button>
