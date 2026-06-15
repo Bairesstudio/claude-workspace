@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTurnos } from '../hooks/useTurnos';
 import { isFuturo, agruparPorFecha, formatFecha } from '../lib/date';
 import { TurnoCard } from '../components/TurnoCard';
+import { TurnoCardSkeleton } from '../components/Skeleton';
 import { EmptyState } from '../components/EmptyState';
 import { CancelarModal } from '../components/CancelarModal';
 import { ReprogramarModal } from '../components/ReprogramarModal';
@@ -15,7 +16,6 @@ export function Proximos() {
   const proximos = turnos.filter((t) => isFuturo(t.fecha) && t.estado === 'confirmado');
   const grupos = agruparPorFecha(proximos);
 
-  if (loading) return <p className="text-sm text-gray-500">Cargando turnos…</p>;
   if (error) return <p className="text-sm text-red-600">{error}</p>;
 
   return (
@@ -24,7 +24,13 @@ export function Proximos() {
       <p className="mt-1 text-sm text-gray-500">Turnos confirmados para los próximos días.</p>
 
       <div className="mt-6 flex flex-col gap-6">
-        {grupos.length === 0 ? (
+        {loading ? (
+          <div className="flex flex-col gap-3">
+            <TurnoCardSkeleton />
+            <TurnoCardSkeleton />
+            <TurnoCardSkeleton />
+          </div>
+        ) : grupos.length === 0 ? (
           <EmptyState message="No hay turnos próximos." />
         ) : (
           grupos.map(({ fecha, turnos }) => (

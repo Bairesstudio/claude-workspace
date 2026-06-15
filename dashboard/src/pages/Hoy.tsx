@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTurnos } from '../hooks/useTurnos';
 import { isHoyFecha } from '../lib/date';
 import { TurnoCard } from '../components/TurnoCard';
+import { TurnoCardSkeleton } from '../components/Skeleton';
 import { EmptyState } from '../components/EmptyState';
 import { CancelarModal } from '../components/CancelarModal';
 import { ReprogramarModal } from '../components/ReprogramarModal';
@@ -16,7 +17,6 @@ export function Hoy() {
     .filter((t) => isHoyFecha(t.fecha) && t.estado === 'confirmado')
     .sort((a, b) => a.hora.localeCompare(b.hora));
 
-  if (loading) return <p className="text-sm text-gray-500">Cargando turnos…</p>;
   if (error) return <p className="text-sm text-red-600">{error}</p>;
 
   return (
@@ -25,7 +25,13 @@ export function Hoy() {
       <p className="mt-1 text-sm text-gray-500">Turnos confirmados para hoy.</p>
 
       <div className="mt-6 flex flex-col gap-3">
-        {turnosHoy.length === 0 ? (
+        {loading ? (
+          <>
+            <TurnoCardSkeleton />
+            <TurnoCardSkeleton />
+            <TurnoCardSkeleton />
+          </>
+        ) : turnosHoy.length === 0 ? (
           <EmptyState message="No hay turnos para hoy." />
         ) : (
           turnosHoy.map((turno) => (

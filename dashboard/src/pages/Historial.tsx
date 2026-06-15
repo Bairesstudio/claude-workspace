@@ -1,6 +1,7 @@
 import { useTurnos } from '../hooks/useTurnos';
 import { isPasado, agruparPorFecha, formatFecha } from '../lib/date';
 import { TurnoCard } from '../components/TurnoCard';
+import { TurnoCardSkeleton } from '../components/Skeleton';
 import { EmptyState } from '../components/EmptyState';
 
 export function Historial() {
@@ -9,7 +10,6 @@ export function Historial() {
   const pasados = turnos.filter((t) => isPasado(t.fecha));
   const grupos = agruparPorFecha(pasados).reverse();
 
-  if (loading) return <p className="text-sm text-gray-500">Cargando turnos…</p>;
   if (error) return <p className="text-sm text-red-600">{error}</p>;
 
   return (
@@ -18,7 +18,13 @@ export function Historial() {
       <p className="mt-1 text-sm text-gray-500">Turnos pasados, confirmados o cancelados.</p>
 
       <div className="mt-6 flex flex-col gap-6">
-        {grupos.length === 0 ? (
+        {loading ? (
+          <div className="flex flex-col gap-3">
+            <TurnoCardSkeleton />
+            <TurnoCardSkeleton />
+            <TurnoCardSkeleton />
+          </div>
+        ) : grupos.length === 0 ? (
           <EmptyState message="Todavía no hay turnos en el historial." />
         ) : (
           grupos.map(({ fecha, turnos }) => (
