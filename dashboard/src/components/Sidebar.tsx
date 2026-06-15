@@ -23,7 +23,7 @@ export function Sidebar() {
             className={({ isActive }) =>
               `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                 isActive
-                  ? 'bg-violet-100 text-violet-700'
+                  ? 'bg-primary-light text-primary-dark'
                   : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
               }`
             }

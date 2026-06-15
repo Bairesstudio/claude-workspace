@@ -17,7 +17,7 @@ export function TurnoCard({ turno, onCancelar, onReprogramar, showEstado }: Turn
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
       <div className="flex items-start gap-4">
-        <div className="flex h-14 w-16 flex-col items-center justify-center rounded-lg bg-violet-50 text-violet-700">
+        <div className="flex h-14 w-16 flex-col items-center justify-center rounded-lg bg-primary-light text-primary-dark">
           <span className="text-sm font-semibold">{turno.hora}</span>
         </div>
         <div>
@@ -37,8 +37,8 @@ export function TurnoCard({ turno, onCancelar, onReprogramar, showEstado }: Turn
           <span
             className={`rounded-full px-3 py-1 text-xs font-medium ${
               turno.estado === 'confirmado'
-                ? 'bg-emerald-100 text-emerald-700'
-                : 'bg-red-100 text-red-700'
+                ? 'bg-success-light text-success-dark'
+                : 'bg-danger-light text-danger-dark'
             }`}
           >
             {turno.estado === 'confirmado' ? 'Confirmado' : 'Cancelado'}
