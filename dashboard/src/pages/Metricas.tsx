@@ -1,6 +1,9 @@
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+import { Wallet, CalendarCheck } from 'lucide-react';
 import { useTurnos } from '../hooks/useTurnos';
 import { calcularMetricas } from '../lib/metrics';
+import { StatCard } from '../components/StatCard';
+import { Skeleton } from '../components/Skeleton';
 
 const formatoPrecio = new Intl.NumberFormat('es-AR', {
   style: 'currency',
@@ -11,7 +14,6 @@ const formatoPrecio = new Intl.NumberFormat('es-AR', {
 export function Metricas() {
   const { turnos, loading, error } = useTurnos();
 
-  if (loading) return <p className="text-sm text-gray-500">Cargando métricas…</p>;
   if (error) return <p className="text-sm text-red-600">{error}</p>;
 
   const ahora = new Date();
@@ -28,47 +30,65 @@ export function Metricas() {
       <p className="mt-1 text-sm text-gray-500">Resumen del mes en curso.</p>
 
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-          <p className="text-sm text-gray-500">Facturación total</p>
-          <p className="mt-1 text-2xl font-semibold text-gray-900">
-            {formatoPrecio.format(metricas.totalFacturado)}
-          </p>
-        </div>
-        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-          <p className="text-sm text-gray-500">Turnos confirmados</p>
-          <p className="mt-1 text-2xl font-semibold text-gray-900">{metricas.cantidadTurnos}</p>
-        </div>
+        {loading ? (
+          <>
+            <Skeleton className="h-24" />
+            <Skeleton className="h-24" />
+          </>
+        ) : (
+          <>
+            <StatCard
+              label="Facturación total"
+              value={formatoPrecio.format(metricas.totalFacturado)}
+              icon={Wallet}
+            />
+            <StatCard
+              label="Turnos confirmados"
+              value={String(metricas.cantidadTurnos)}
+              icon={CalendarCheck}
+            />
+          </>
+        )}
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-          <h2 className="text-sm font-semibold text-gray-700">Por servicio</h2>
-          <div className="mt-4 h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={metricas.porServicio}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="nombre" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip formatter={(value: number) => formatoPrecio.format(value)} />
-                <Bar dataKey="total" fill="var(--color-primary)" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-          <h2 className="text-sm font-semibold text-gray-700">Por empleado</h2>
-          <div className="mt-4 h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={metricas.porEmpleado}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="nombre" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip formatter={(value: number) => formatoPrecio.format(value)} />
-                <Bar dataKey="total" fill="var(--color-accent)" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+        {loading ? (
+          <>
+            <Skeleton className="h-80" />
+            <Skeleton className="h-80" />
+          </>
+        ) : (
+          <>
+            <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+              <h2 className="text-sm font-semibold text-gray-700">Por servicio</h2>
+              <div className="mt-4 h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={metricas.porServicio}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="nombre" tick={{ fontSize: 12 }} />
+                    <YAxis tick={{ fontSize: 12 }} />
+                    <Tooltip formatter={(value: number) => formatoPrecio.format(value)} />
+                    <Bar dataKey="total" fill="var(--color-primary)" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+            <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+              <h2 className="text-sm font-semibold text-gray-700">Por empleado</h2>
+              <div className="mt-4 h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={metricas.porEmpleado}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="nombre" tick={{ fontSize: 12 }} />
+                    <YAxis tick={{ fontSize: 12 }} />
+                    <Tooltip formatter={(value: number) => formatoPrecio.format(value)} />
+                    <Bar dataKey="total" fill="var(--color-accent)" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
