@@ -67,7 +67,7 @@ export function Metricas() {
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
                     <XAxis dataKey="nombre" tick={{ fontSize: 12 }} />
                     <YAxis tick={{ fontSize: 12 }} />
-                    <Tooltip formatter={(value: number) => formatoPrecio.format(value)} />
+                    <Tooltip formatter={(value) => formatoPrecio.format(Number(value))} />
                     <Bar dataKey="total" fill="var(--color-primary)" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
@@ -81,7 +81,7 @@ export function Metricas() {
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
                     <XAxis dataKey="nombre" tick={{ fontSize: 12 }} />
                     <YAxis tick={{ fontSize: 12 }} />
-                    <Tooltip formatter={(value: number) => formatoPrecio.format(value)} />
+                    <Tooltip formatter={(value) => formatoPrecio.format(Number(value))} />
                     <Bar dataKey="total" fill="var(--color-accent)" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
