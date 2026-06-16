@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom';
-import { Calendar, CalendarRange, History, BarChart3 } from 'lucide-react';
+import { Calendar, CalendarRange, History, BarChart3, LogOut } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 const links = [
   { to: '/', label: 'Hoy', icon: Calendar },
@@ -9,6 +10,8 @@ const links = [
 ];
 
 export function Sidebar() {
+  const { signOut } = useAuth();
+
   return (
     <aside className="flex h-full w-56 flex-col border-r border-gray-200 bg-white">
       <div className="px-6 py-6">
@@ -34,6 +37,15 @@ export function Sidebar() {
           </NavLink>
         ))}
       </nav>
+      <div className="mt-auto px-3 pb-6">
+        <button
+          onClick={signOut}
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900"
+        >
+          <LogOut size={18} aria-hidden="true" />
+          Cerrar sesión
+        </button>
+      </div>
     </aside>
   );
 }
