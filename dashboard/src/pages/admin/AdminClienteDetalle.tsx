@@ -1,0 +1,285 @@
+import { useState, useEffect } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import { ArrowLeft, Plus } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
+
+interface Cliente {
+  id: string;
+  nombre: string;
+  slug: string;
+  mail_dueno: string;
+  calendar_id: string | null;
+}
+interface Empleado { id: string; nombre: string; activo: boolean; }
+interface Servicio { id: string; nombre: string; tamano: string | null; precio: number; duracion_minutos: number; activo: boolean; }
+
+function normalizarNombre(str: string) {
+  return str
+    .toLowerCase()
+    .trim()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9\s_]/g, '')
+    .replace(/\s+/g, '_');
+}
+
+export function AdminClienteDetalle() {
+  const { id } = useParams<{ id: string }>();
+  const [cliente, setCliente] = useState<Cliente | null>(null);
+  const [empleados, setEmpleados] = useState<Empleado[]>([]);
+  const [servicios, setServicios] = useState<Servicio[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const [showEmpForm, setShowEmpForm] = useState(false);
+  const [empNombre, setEmpNombre] = useState('');
+  const [savingEmp, setSavingEmp] = useState(false);
+
+  const [showSvcForm, setShowSvcForm] = useState(false);
+  const [svcForm, setSvcForm] = useState({ nombre: '', tamano: 'chico', precio: '', duracion_minutos: '60' });
+  const [savingSvc, setSavingSvc] = useState(false);
+
+  useEffect(() => { if (id) load(id); }, [id]);
+
+  async function load(clienteId: string) {
+    setLoading(true);
+    const [{ data: cl }, { data: emps }, { data: svcs }] = await Promise.all([
+      supabase.from('clientes').select('*').eq('id', clienteId).single(),
+      supabase.from('empleados').select('*').eq('cliente_id', clienteId).order('nombre'),
+      supabase.from('servicios').select('*').eq('cliente_id', clienteId).order('nombre'),
+    ]);
+    setCliente(cl);
+    setEmpleados(emps ?? []);
+    setServicios(svcs ?? []);
+    setLoading(false);
+  }
+
+  async function addEmpleado(e: React.FormEvent) {
+    e.preventDefault();
+    if (!id) return;
+    setSavingEmp(true);
+    await supabase.from('empleados').insert({ cliente_id: id, nombre: empNombre });
+    setEmpNombre('');
+    setShowEmpForm(false);
+    setSavingEmp(false);
+    load(id);
+  }
+
+  async function addServicio(e: React.FormEvent) {
+    e.preventDefault();
+    if (!id) return;
+    setSavingSvc(true);
+    await supabase.from('servicios').insert({
+      cliente_id: id,
+      nombre: svcForm.nombre,
+      nombre_normalizado: normalizarNombre(svcForm.nombre),
+      tamano: svcForm.tamano,
+      precio: parseFloat(svcForm.precio) || 0,
+      duracion_minutos: parseInt(svcForm.duracion_minutos) || 60,
+    });
+    setSvcForm({ nombre: '', tamano: 'chico', precio: '', duracion_minutos: '60' });
+    setShowSvcForm(false);
+    setSavingSvc(false);
+    load(id);
+  }
+
+  if (loading) {
+    return (
+      <div className="animate-fade-in space-y-4">
+        {[1, 2, 3].map(i => <div key={i} className="h-20 animate-pulse rounded-xl bg-gray-100" />)}
+      </div>
+    );
+  }
+  if (!cliente) return <p className="text-sm text-gray-500">Cliente no encontrado.</p>;
+
+  return (
+    <div className="animate-fade-in space-y-8">
+      {/* Header */}
+      <div>
+        <Link to="/admin" className="mb-4 flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900">
+          <ArrowLeft size={16} /> Volver a clientes
+        </Link>
+        <h1 className="text-2xl font-bold text-gray-900">{cliente.nombre}</h1>
+        <p className="mt-1 text-sm text-gray-500">
+          {cliente.mail_dueno} · webhook: <span className="font-mono">{cliente.slug}-reservas</span>
+        </p>
+      </div>
+
+      {/* Empleados */}
+      <section>
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-base font-semibold text-gray-900">
+            Empleados <span className="ml-1 text-sm font-normal text-gray-400">({empleados.length})</span>
+          </h2>
+          <button
+            onClick={() => setShowEmpForm(v => !v)}
+            className="flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary-dark"
+          >
+            <Plus size={14} /> Agregar
+          </button>
+        </div>
+
+        {showEmpForm && (
+          <form onSubmit={addEmpleado} className="mb-3 flex gap-2">
+            <input
+              required
+              value={empNombre}
+              onChange={e => setEmpNombre(e.target.value)}
+              placeholder="Nombre del empleado"
+              className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+            />
+            <button
+              type="submit"
+              disabled={savingEmp}
+              className="rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-white hover:bg-primary-dark disabled:opacity-50"
+            >
+              {savingEmp ? '...' : 'Guardar'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowEmpForm(false)}
+              className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50"
+            >
+              Cancelar
+            </button>
+          </form>
+        )}
+
+        <div className="divide-y divide-gray-100 rounded-xl border border-gray-200 bg-white">
+          {empleados.length === 0 ? (
+            <p className="py-6 text-center text-sm text-gray-400">Sin empleados todavía</p>
+          ) : (
+            empleados.map(emp => (
+              <div key={emp.id} className="flex items-center justify-between px-4 py-3">
+                <span className="text-sm font-medium text-gray-900">{emp.nombre}</span>
+                <span className={`rounded-full px-2 py-0.5 text-xs ${emp.activo ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                  {emp.activo ? 'Activo' : 'Inactivo'}
+                </span>
+              </div>
+            ))
+          )}
+        </div>
+      </section>
+
+      {/* Servicios */}
+      <section>
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-base font-semibold text-gray-900">
+            Servicios <span className="ml-1 text-sm font-normal text-gray-400">({servicios.length})</span>
+          </h2>
+          <button
+            onClick={() => setShowSvcForm(v => !v)}
+            className="flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary-dark"
+          >
+            <Plus size={14} /> Agregar
+          </button>
+        </div>
+
+        {showSvcForm && (
+          <form onSubmit={addServicio} className="mb-3 rounded-xl border border-gray-200 bg-white p-4 space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="col-span-2">
+                <label className="mb-1 block text-xs font-medium text-gray-600">Nombre del servicio</label>
+                <input
+                  required
+                  value={svcForm.nombre}
+                  onChange={e => setSvcForm(f => ({ ...f, nombre: e.target.value }))}
+                  placeholder="Baño y corte"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-gray-600">Tamaño</label>
+                <select
+                  value={svcForm.tamano}
+                  onChange={e => setSvcForm(f => ({ ...f, tamano: e.target.value }))}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                >
+                  <option value="chico">Chico</option>
+                  <option value="mediano">Mediano</option>
+                  <option value="grande">Grande</option>
+                </select>
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-gray-600">Duración (min)</label>
+                <input
+                  required
+                  type="number"
+                  min="15"
+                  step="15"
+                  value={svcForm.duracion_minutos}
+                  onChange={e => setSvcForm(f => ({ ...f, duracion_minutos: e.target.value }))}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-gray-600">Precio ($)</label>
+                <input
+                  required
+                  type="number"
+                  min="0"
+                  value={svcForm.precio}
+                  onChange={e => setSvcForm(f => ({ ...f, precio: e.target.value }))}
+                  placeholder="2500"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                />
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button
+                type="submit"
+                disabled={savingSvc}
+                className="rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-white hover:bg-primary-dark disabled:opacity-50"
+              >
+                {savingSvc ? '...' : 'Guardar'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowSvcForm(false)}
+                className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50"
+              >
+                Cancelar
+              </button>
+            </div>
+          </form>
+        )}
+
+        <div className="divide-y divide-gray-100 rounded-xl border border-gray-200 bg-white">
+          {servicios.length === 0 ? (
+            <p className="py-6 text-center text-sm text-gray-400">Sin servicios todavía</p>
+          ) : (
+            servicios.map(svc => (
+              <div key={svc.id} className="flex items-center justify-between px-4 py-3">
+                <div>
+                  <span className="text-sm font-medium text-gray-900">{svc.nombre}</span>
+                  <span className="ml-2 text-xs text-gray-400">
+                    {svc.tamano} · {svc.duracion_minutos} min
+                  </span>
+                </div>
+                <span className="text-sm font-semibold text-gray-700">
+                  ${Number(svc.precio).toLocaleString('es-AR')}
+                </span>
+              </div>
+            ))
+          )}
+        </div>
+      </section>
+
+      {/* Instrucciones n8n */}
+      <section className="rounded-xl border border-amber-200 bg-amber-50 p-5">
+        <h2 className="mb-2 text-sm font-semibold text-amber-800">Próximo paso: activar en n8n</h2>
+        <ol className="list-inside list-decimal space-y-1 text-sm text-amber-700">
+          <li>Clonar WF1 "Recepcion - Validación" en n8n</li>
+          <li>
+            En el nodo <code className="rounded bg-amber-100 px-1">CONFIG - Cliente</code> cambiar el slug a{' '}
+            <strong>{cliente.slug}</strong>
+          </li>
+          <li>
+            Cambiar el path del webhook a <strong>{cliente.slug}-reservas</strong>
+          </li>
+          <li>Publicar el workflow clonado</li>
+          <li>Conectar el formulario de Lovable a la nueva URL del webhook</li>
+        </ol>
+      </section>
+    </div>
+  );
+}
