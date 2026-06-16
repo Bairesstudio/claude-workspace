@@ -10,12 +10,12 @@ const links = [
 ];
 
 export function Sidebar() {
-  const { signOut } = useAuth();
+  const { signOut, negocioNombre } = useAuth();
 
   return (
     <aside className="flex h-full w-56 flex-col border-r border-gray-200 bg-white">
       <div className="px-6 py-6">
-        <p className="text-lg font-semibold text-gray-900">Pajaro Loco</p>
+        <p className="text-lg font-semibold text-gray-900">{negocioNombre || '—'}</p>
         <p className="text-sm text-gray-500">Panel de turnos</p>
       </div>
       <nav className="flex flex-col gap-1 px-3">
