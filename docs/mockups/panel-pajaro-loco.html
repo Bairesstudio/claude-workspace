@@ -1,0 +1,590 @@
+<!-- Mockup de ejemplo - datos ficticios. Panel del cliente para Pajaro Loco Pet Store (Baires Studio). -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel Pájaro Loco · Baires Studio (mockup)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0b0b0d;
+    --bg-elevated: #15151a;
+    --gold: #ffc400;
+    --gold-deep: #ff9100;
+    --text: #f5f5f0;
+    --text-dim: #9a9a9f;
+    --border: rgba(255, 196, 0, 0.18);
+    --glow: 0 0 24px rgba(255, 196, 0, 0.20);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    background:
+      radial-gradient(circle at 15% -10%, rgba(255,145,0,0.25), transparent 45%),
+      radial-gradient(circle at 85% 0%, rgba(255,196,0,0.16), transparent 40%),
+      var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding-bottom: 4rem;
+  }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 0 1.5rem; }
+
+  /* nav */
+  .topnav {
+    position: sticky; top: 0; z-index: 10;
+    background: rgba(11,11,13,0.85);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-inner { display: flex; justify-content: space-between; align-items: center; padding: .9rem 1.5rem; max-width: 960px; margin: 0 auto; }
+  .nav-brand { font-family: 'Russo One', sans-serif; color: var(--gold); font-size: .9rem; letter-spacing: .08em; text-transform: uppercase; }
+  .nav-links { display: flex; gap: 1.5rem; }
+  .nav-links a { color: var(--text-dim); text-decoration: none; font-size: .8rem; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; transition: color .2s; }
+  .nav-links a:hover { color: var(--gold); }
+
+  /* header */
+  header.hero {
+    padding: 3rem 1.5rem 2.5rem;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+  }
+  .badge-demo {
+    display: inline-block;
+    font-size: 11px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 4px 14px;
+    margin-bottom: 1.25rem;
+  }
+  h1.brand {
+    font-family: 'Russo One', sans-serif;
+    font-size: clamp(2.4rem, 7vw, 3.8rem);
+    margin: 0;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    background: linear-gradient(180deg, #fff6cf 0%, var(--gold) 45%, var(--gold-deep) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0 0 36px rgba(255,196,0,.35);
+  }
+  .tagline {
+    color: var(--text-dim);
+    font-size: 14px;
+    margin-top: .6rem;
+    letter-spacing: .04em;
+  }
+  .greeting {
+    margin-top: 1.75rem;
+    font-size: 18px;
+    font-weight: 600;
+  }
+  .greeting .name { color: var(--gold); }
+
+  /* sections */
+  main { padding-top: 1rem; }
+  section { margin-top: 3rem; scroll-margin-top: 80px; }
+  h2.section-title {
+    font-family: 'Russo One', sans-serif;
+    font-size: 1.3rem;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    margin: 0 0 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+  }
+  h2.section-title::before {
+    content: '';
+    display: inline-block;
+    width: 10px; height: 10px;
+    background: var(--gold);
+    box-shadow: 0 0 10px var(--gold);
+    transform: rotate(45deg);
+  }
+  .section-sub { color: var(--text-dim); font-size: .85rem; margin: -0.75rem 0 1.5rem; }
+
+  /* turnos list */
+  .turnos-tabs {
+    display: inline-flex;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 4px;
+    margin-bottom: 1.5rem;
+  }
+  .turnos-tab {
+    padding: 8px 22px;
+    border-radius: 999px;
+    font-family: 'Russo One', sans-serif;
+    font-size: .72rem;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--text-dim);
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    transition: all .2s;
+  }
+  .turnos-tab.active {
+    background: linear-gradient(135deg, var(--gold), var(--gold-deep));
+    color: #1a1100;
+    box-shadow: var(--glow);
+  }
+  .turnos-list-wrap {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: var(--glow);
+    overflow: hidden;
+  }
+  .turnos-date-header {
+    padding: .8rem 1.4rem .55rem;
+    font-family: 'Russo One', sans-serif;
+    font-size: .7rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--gold);
+    background: rgba(255,196,0,0.05);
+  }
+  .turno-row {
+    display: grid;
+    grid-template-columns: 84px 1fr auto;
+    gap: 1.25rem;
+    align-items: center;
+    padding: 1rem 1.4rem;
+    border-bottom: 1px solid rgba(255,255,255,.06);
+    transition: opacity .3s ease;
+  }
+  .turno-row:last-child { border-bottom: none; }
+  .turno-row.cancelado { opacity: .4; }
+  .turno-hora {
+    font-family: 'Russo One', sans-serif;
+    font-size: 1.25rem;
+    color: var(--gold);
+    text-align: center;
+    line-height: 1.2;
+  }
+  .turno-hora small { display: block; color: var(--text-dim); font-size: .65rem; font-family: 'Inter', sans-serif; font-weight: 600; letter-spacing: .04em; }
+  .turno-info .mascota { font-weight: 700; font-size: 1.05rem; }
+  .turno-info .detalle { color: var(--text-dim); font-size: .85rem; margin-top: 3px; }
+  .turno-info .obs { color: var(--gold-deep); font-size: .8rem; margin-top: 5px; font-weight: 600; }
+  .turno-right { text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: .6rem; }
+  .turno-precio { font-weight: 700; font-size: 1.05rem; }
+  .tamano-badge {
+    display: inline-block; font-size: .65rem; text-transform: uppercase; font-weight: 700;
+    padding: 2px 9px; border-radius: 999px; margin-left: 8px;
+    border: 1px solid currentColor; letter-spacing: .04em;
+  }
+  .tamano-chico { color: #7CE2A6; }
+  .tamano-mediano { color: #FFC400; }
+  .tamano-grande { color: #FF6B6B; }
+
+  .btn-cancel {
+    background: transparent;
+    border: 1px solid #FF6B6B;
+    color: #FF6B6B;
+    font-size: .75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    padding: 6px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background .2s;
+  }
+  .btn-cancel:hover { background: rgba(255,107,107,.12); }
+  .turno-row.cancelado .btn-cancel { border-color: var(--text-dim); color: var(--text-dim); cursor: default; }
+  .turno-row.cancelado .btn-cancel:hover { background: transparent; }
+
+  .estado-badge {
+    font-size: .68rem; text-transform: uppercase; font-weight: 700;
+    padding: 5px 13px; border-radius: 999px; letter-spacing: .05em;
+    border: 1px solid currentColor;
+  }
+  .estado-confirmado { color: #7CE2A6; }
+  .estado-cancelado { color: var(--text-dim); }
+
+  /* metric cards */
+  .metricas-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .metric-card {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.25rem 1.4rem;
+    box-shadow: var(--glow);
+  }
+  .metric-label {
+    font-size: .75rem; text-transform: uppercase; letter-spacing: .08em;
+    color: var(--text-dim); margin-bottom: .5rem; font-weight: 600;
+  }
+  .metric-value {
+    font-family: 'Russo One', sans-serif;
+    font-size: 2rem;
+    color: var(--gold);
+  }
+  .desglose {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.25rem 1.4rem;
+    box-shadow: var(--glow);
+  }
+  .desglose-title { font-size: .8rem; text-transform: uppercase; letter-spacing: .08em; color: var(--text-dim); font-weight: 600; margin-bottom: 1rem; }
+  .desglose-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: .65rem 0; border-bottom: 1px solid rgba(255,255,255,.06);
+    gap: 1rem;
+  }
+  .desglose-row:last-child { border-bottom: none; }
+  .desglose-nombre { min-width: 130px; font-weight: 600; font-size: .9rem; }
+  .desglose-bar {
+    flex: 1; height: 6px; background: rgba(255,255,255,.06); border-radius: 4px;
+    overflow: hidden;
+  }
+  .desglose-bar-fill {
+    height: 100%; background: linear-gradient(90deg, var(--gold-deep), var(--gold));
+  }
+  .desglose-cifras { min-width: 150px; text-align: right; font-size: .85rem; color: var(--text-dim); }
+  .desglose-cifras strong { color: var(--text); font-weight: 700; }
+
+  /* servicios table */
+  .servicios-table-wrap {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: var(--glow);
+    overflow: hidden;
+  }
+  table.servicios-table { width: 100%; border-collapse: collapse; }
+  .servicios-table th, .servicios-table td {
+    padding: .85rem 1.2rem; text-align: left; font-size: .9rem;
+    border-bottom: 1px solid rgba(255,255,255,.06);
+  }
+  .servicios-table th {
+    color: var(--text-dim); font-weight: 600; text-transform: uppercase; font-size: .72rem; letter-spacing: .06em;
+  }
+  .servicios-table tr:last-child td { border-bottom: none; }
+  .precio-input {
+    background: rgba(255,255,255,.04);
+    border: 1px solid var(--border);
+    color: var(--gold);
+    font-weight: 700;
+    font-family: 'Russo One', sans-serif;
+    border-radius: 8px;
+    padding: 7px 10px;
+    width: 110px;
+    font-size: .9rem;
+  }
+  .precio-input:focus { outline: none; border-color: var(--gold); }
+
+  .btn-save {
+    margin-top: 1.25rem;
+    background: linear-gradient(135deg, var(--gold), var(--gold-deep));
+    color: #1a1100;
+    border: none;
+    font-family: 'Russo One', sans-serif;
+    font-size: .85rem;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    padding: 12px 28px;
+    border-radius: 10px;
+    cursor: pointer;
+    box-shadow: var(--glow);
+  }
+  .btn-save:hover { filter: brightness(1.08); }
+
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: var(--bg-elevated); border: 1px solid var(--gold);
+    color: var(--gold); padding: 10px 22px; border-radius: 10px;
+    font-size: .85rem; font-weight: 600; opacity: 0; pointer-events: none;
+    transition: all .3s; box-shadow: var(--glow);
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  footer {
+    text-align: center; color: var(--text-dim); font-size: .8rem;
+    margin-top: 3.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border);
+  }
+
+  @media (max-width: 640px) {
+    .nav-links { display: none; }
+    .turno-row { grid-template-columns: 1fr; text-align: left; }
+    .turno-hora { text-align: left; }
+    .turno-right { align-items: flex-start; }
+    .desglose-row { flex-wrap: wrap; }
+    .desglose-bar { order: 3; width: 100%; flex-basis: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="nav-inner">
+    <span class="nav-brand">⚡ Pájaro Loco</span>
+    <div class="nav-links">
+      <a href="#turnos">Turnos</a>
+      <a href="#metricas">Métricas</a>
+      <a href="#servicios">Servicios</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <span class="badge-demo">Mockup · datos de ejemplo</span>
+  <h1 class="brand">Pájaro Loco</h1>
+  <p class="tagline">Panel del negocio — powered by Baires Studio</p>
+  <p class="greeting">Hola <span class="name">Soledad</span> ⚡ — esto es lo que verías hoy, 14 de junio</p>
+</header>
+
+<main class="wrap">
+
+  <section id="turnos">
+    <h2 class="section-title">🐾 Turnos</h2>
+    <p class="section-sub">Lo que antes mirabas en la planilla, ahora acá. "Próximos" para lo que viene, "Historial" para lo que ya pasó. Tocá "Cancelar" para liberar un horario.</p>
+
+    <div class="turnos-tabs">
+      <button class="turnos-tab active" data-target="proximos">Próximos</button>
+      <button class="turnos-tab" data-target="historial">Historial</button>
+    </div>
+
+    <div class="turnos-list-wrap" id="proximos-list">
+
+      <div class="turnos-date-header">Hoy · 14 jun</div>
+      <div class="turno-row">
+        <div class="turno-hora">10:00<small>11:30</small></div>
+        <div class="turno-info">
+          <div class="mascota">Rocky <span class="tamano-badge tamano-mediano">Mediano</span></div>
+          <div class="detalle">Caniche · Dueña: Juana Pérez · Baño y corte</div>
+          <div class="obs">⚠ Es nervioso con el secador</div>
+        </div>
+        <div class="turno-right">
+          <div class="turno-precio">$ 23.000</div>
+          <button class="btn-cancel">Cancelar</button>
+        </div>
+      </div>
+      <div class="turno-row">
+        <div class="turno-hora">11:30<small>13:00</small></div>
+        <div class="turno-info">
+          <div class="mascota">Toby <span class="tamano-badge tamano-grande">Grande</span></div>
+          <div class="detalle">Labrador · Dueño: Carlos Gómez · Baño</div>
+        </div>
+        <div class="turno-right">
+          <div class="turno-precio">$ 30.000</div>
+          <button class="btn-cancel">Cancelar</button>
+        </div>
+      </div>
+      <div class="turno-row">
+        <div class="turno-hora">14:00<small>14:15</small></div>
+        <div class="turno-info">
+          <div class="mascota">Mia <span class="tamano-badge tamano-chico">Chico</span></div>
+          <div class="detalle">Yorkshire · Dueña: Lucía Fernández · Corte de uñas</div>
+        </div>
+        <div class="turno-right">
+          <div class="turno-precio">$ 5.000</div>
+          <button class="btn-cancel">Cancelar</button>
+        </div>
+      </div>
+      <div class="turno-row">
+        <div class="turno-hora">15:00<small>16:45</small></div>
+        <div class="turno-info">
+          <div class="mascota">Bruno <span class="tamano-badge tamano-grande">Grande</span></div>
+          <div class="detalle">Bulldog · Dueña: Martina Ruiz · Baño y corte</div>
+        </div>
+        <div class="turno-right">
+          <div class="turno-precio">$ 23.000</div>
+          <button class="btn-cancel">Cancelar</button>
+        </div>
+      </div>
+
+      <div class="turnos-date-header">Mañana · 15 jun</div>
+      <div class="turno-row">
+        <div class="turno-hora">10:30<small>12:00</small></div>
+        <div class="turno-info">
+          <div class="mascota">Luna <span class="tamano-badge tamano-grande">Grande</span></div>
+          <div class="detalle">Border Collie · Dueño: Pedro Sosa · Baño y corte</div>
+        </div>
+        <div class="turno-right">
+          <div class="turno-precio">$ 23.000</div>
+          <button class="btn-cancel">Cancelar</button>
+        </div>
+      </div>
+      <div class="turno-row">
+        <div class="turno-hora">16:00<small>17:15</small></div>
+        <div class="turno-info">
+          <div class="mascota">Coco <span class="tamano-badge tamano-mediano">Mediano</span></div>
+          <div class="detalle">Caniche · Dueña: Valeria Díaz · Baño</div>
+        </div>
+        <div class="turno-right">
+          <div class="turno-precio">$ 25.000</div>
+          <button class="btn-cancel">Cancelar</button>
+        </div>
+      </div>
+
+      <div class="turnos-date-header">17 jun</div>
+      <div class="turno-row">
+        <div class="turno-hora">11:00<small>11:15</small></div>
+        <div class="turno-info">
+          <div class="mascota">Simba <span class="tamano-badge tamano-chico">Chico</span></div>
+          <div class="detalle">Schnauzer · Dueño: Nico Álvarez · Corte de uñas</div>
+        </div>
+        <div class="turno-right">
+          <div class="turno-precio">$ 5.000</div>
+          <button class="btn-cancel">Cancelar</button>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="turnos-list-wrap" id="historial-list" style="display:none">
+
+      <div class="turnos-date-header">Ayer · 13 jun</div>
+      <div class="turno-row">
+        <div class="turno-hora">10:00<small>11:30</small></div>
+        <div class="turno-info">
+          <div class="mascota">Nina <span class="tamano-badge tamano-mediano">Mediano</span></div>
+          <div class="detalle">Caniche · Dueña: Carla Méndez · Baño y corte</div>
+        </div>
+        <div class="turno-right">
+          <div class="turno-precio">$ 23.000</div>
+          <span class="estado-badge estado-confirmado">Confirmado</span>
+        </div>
+      </div>
+      <div class="turno-row cancelado">
+        <div class="turno-hora">15:00<small>16:30</small></div>
+        <div class="turno-info">
+          <div class="mascota">Thor <span class="tamano-badge tamano-grande">Grande</span></div>
+          <div class="detalle">Pastor Alemán · Dueño: Diego Paz · Baño y corte</div>
+        </div>
+        <div class="turno-right">
+          <div class="turno-precio">$ 23.000</div>
+          <span class="estado-badge estado-cancelado">Cancelado</span>
+        </div>
+      </div>
+
+      <div class="turnos-date-header">12 jun</div>
+      <div class="turno-row">
+        <div class="turno-hora">09:30<small>10:20</small></div>
+        <div class="turno-info">
+          <div class="mascota">Kiwi <span class="tamano-badge tamano-chico">Chico</span></div>
+          <div class="detalle">Caniche · Dueña: Romina Acosta · Baño</div>
+        </div>
+        <div class="turno-right">
+          <div class="turno-precio">$ 20.000</div>
+          <span class="estado-badge estado-confirmado">Confirmado</span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <section id="metricas">
+    <h2 class="section-title">⚡ Métricas del mes</h2>
+    <p class="section-sub">Lo mismo que hoy te llega por mail el día 1 (WF3), pero siempre visible.</p>
+
+    <div class="metricas-grid">
+      <div class="metric-card">
+        <div class="metric-label">Turnos del mes</div>
+        <div class="metric-value">38</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Facturación estimada</div>
+        <div class="metric-value">$ 772.000</div>
+      </div>
+    </div>
+
+    <div class="desglose">
+      <div class="desglose-title">Desglose por servicio</div>
+      <div class="desglose-row">
+        <div class="desglose-nombre">Baño y corte</div>
+        <div class="desglose-bar"><div class="desglose-bar-fill" style="width: 48%"></div></div>
+        <div class="desglose-cifras"><strong>16</strong> turnos · $ 368.000</div>
+      </div>
+      <div class="desglose-row">
+        <div class="desglose-nombre">Baño</div>
+        <div class="desglose-bar"><div class="desglose-bar-fill" style="width: 47%"></div></div>
+        <div class="desglose-cifras"><strong>14</strong> turnos · $ 364.000</div>
+      </div>
+      <div class="desglose-row">
+        <div class="desglose-nombre">Corte de uñas</div>
+        <div class="desglose-bar"><div class="desglose-bar-fill" style="width: 5%"></div></div>
+        <div class="desglose-cifras"><strong>8</strong> turnos · $ 40.000</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="servicios">
+    <h2 class="section-title">🛠 Servicios y precios</h2>
+    <p class="section-sub">Editá precios por tamaño de perro. (En este mockup no se guarda nada de verdad.)</p>
+
+    <div class="servicios-table-wrap">
+      <table class="servicios-table">
+        <thead>
+          <tr><th>Servicio</th><th>Tamaño</th><th>Duración</th><th>Precio</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Baño</td><td><span class="tamano-badge tamano-chico">Chico</span></td><td>50 min</td><td><input class="precio-input" value="$ 20.000"></td></tr>
+          <tr><td>Baño</td><td><span class="tamano-badge tamano-mediano">Mediano</span></td><td>75 min</td><td><input class="precio-input" value="$ 25.000"></td></tr>
+          <tr><td>Baño</td><td><span class="tamano-badge tamano-grande">Grande</span></td><td>90 min</td><td><input class="precio-input" value="$ 30.000"></td></tr>
+          <tr><td>Baño y corte</td><td><span class="tamano-badge tamano-chico">Chico</span></td><td>60 min</td><td><input class="precio-input" value="$ 23.000"></td></tr>
+          <tr><td>Baño y corte</td><td><span class="tamano-badge tamano-mediano">Mediano</span></td><td>90 min</td><td><input class="precio-input" value="$ 23.000"></td></tr>
+          <tr><td>Baño y corte</td><td><span class="tamano-badge tamano-grande">Grande</span></td><td>105 min</td><td><input class="precio-input" value="$ 23.000"></td></tr>
+          <tr><td>Corte de uñas</td><td><span class="tamano-badge tamano-chico">Chico</span></td><td>15 min</td><td><input class="precio-input" value="$ 5.000"></td></tr>
+          <tr><td>Corte de uñas</td><td><span class="tamano-badge tamano-mediano">Mediano</span></td><td>15 min</td><td><input class="precio-input" value="$ 5.000"></td></tr>
+          <tr><td>Corte de uñas</td><td><span class="tamano-badge tamano-grande">Grande</span></td><td>15 min</td><td><input class="precio-input" value="$ 5.000"></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <button class="btn-save" id="btn-save">Guardar cambios</button>
+  </section>
+
+  <footer>
+    Mockup generado para brainstorming — Baires Studio · Pájaro Loco Pet Store · datos ficticios
+  </footer>
+
+</main>
+
+<div class="toast" id="toast">Cambios guardados (ejemplo)</div>
+
+<script>
+  document.querySelectorAll('.btn-cancel').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var row = btn.closest('.turno-row');
+      if (row.classList.contains('cancelado')) return;
+      row.classList.add('cancelado');
+      btn.textContent = 'Cancelado';
+    });
+  });
+
+  document.querySelectorAll('.turnos-tab').forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      document.querySelectorAll('.turnos-tab').forEach(function (t) { t.classList.remove('active'); });
+      tab.classList.add('active');
+      var target = tab.dataset.target;
+      document.getElementById('proximos-list').style.display = target === 'proximos' ? '' : 'none';
+      document.getElementById('historial-list').style.display = target === 'historial' ? '' : 'none';
+    });
+  });
+
+  document.getElementById('btn-save').addEventListener('click', function () {
+    var toast = document.getElementById('toast');
+    toast.classList.add('show');
+    setTimeout(function () { toast.classList.remove('show'); }, 2200);
+  });
+</script>
+
+</body>
+</html>

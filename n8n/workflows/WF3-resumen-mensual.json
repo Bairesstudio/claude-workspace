@@ -1,0 +1,73 @@
+{
+  "name": "WF3 - Resumen mensual",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 1 * *"
+            }
+          ]
+        }
+      },
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "value": "REEMPLAZAR_CON_ID_DE_SHEET",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Turnos",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "name": "Get row(s) - Turnos del mes",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Filtra los turnos del mes anterior y calcula metricas\nconst now = new Date();\nconst targetMonth = now.getMonth() === 0 ? 11 : now.getMonth() - 1;\nconst targetYear = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();\n\nconst items = $input.all();\nconst turnosMes = items.filter(item => {\n  const fecha = new Date(item.json.fecha);\n  return fecha.getMonth() === targetMonth && fecha.getFullYear() === targetYear;\n});\n\nlet totalFacturado = 0;\nconst porServicio = {};\n\nfor (const item of turnosMes) {\n  const precio = Number(item.json.precio_servicio) || 0;\n  const servicio = item.json.servicio || 'Sin especificar';\n\n  totalFacturado += precio;\n\n  if (!porServicio[servicio]) {\n    porServicio[servicio] = { cantidad: 0, total: 0 };\n  }\n  porServicio[servicio].cantidad += 1;\n  porServicio[servicio].total += precio;\n}\n\nconst desglose = Object.entries(porServicio)\n  .map(([servicio, datos]) => `- ${servicio}: ${datos.cantidad} turnos - $${datos.total.toLocaleString('es-AR')}`)\n  .join('\\n');\n\nconst nombresMeses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];\n\nreturn [{\n  json: {\n    mes: nombresMeses[targetMonth],\n    anio: targetYear,\n    cantidad_turnos: turnosMes.length,\n    total_facturado: totalFacturado,\n    desglose_por_servicio: desglose\n  }\n}];"
+      },
+      "name": "Calcular metricas",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "sendTo": "REEMPLAZAR_CON_MAIL_DEL_DUENO",
+        "subject": "=Resumen de {{ $json.mes }} {{ $json.anio }} - Baires Studio",
+        "message": "=Hola,\n\nAca va el resumen de {{ $json.mes }} {{ $json.anio }}:\n\nTurnos totales: {{ $json.cantidad_turnos }}\nFacturacion estimada: ${{ $json.total_facturado.toLocaleString('es-AR') }}\n\nDesglose por servicio:\n{{ $json.desglose_por_servicio }}\n\nSaludos,\nBaires Studio",
+        "options": {}
+      },
+      "name": "Mail Dueño - Resumen",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [900, 300]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [[{ "node": "Get row(s) - Turnos del mes", "type": "main", "index": 0 }]]
+    },
+    "Get row(s) - Turnos del mes": {
+      "main": [[{ "node": "Calcular metricas", "type": "main", "index": 0 }]]
+    },
+    "Calcular metricas": {
+      "main": [[{ "node": "Mail Dueño - Resumen", "type": "main", "index": 0 }]]
+    }
+  }
+}
