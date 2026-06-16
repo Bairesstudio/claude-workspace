@@ -7,12 +7,22 @@ import { Hoy } from './pages/Hoy';
 import { Proximos } from './pages/Proximos';
 import { Historial } from './pages/Historial';
 import { Metricas } from './pages/Metricas';
+import { AdminClientes } from './pages/admin/AdminClientes';
+import { AdminClienteDetalle } from './pages/admin/AdminClienteDetalle';
 
 function PublicRoute() {
   const { user, loading } = useAuth();
   if (loading) return null;
   if (user) return <Navigate to="/" replace />;
   return <Login />;
+}
+
+function AdminRoute({ children }: { children: React.ReactNode }) {
+  const { user, role, loading } = useAuth();
+  if (loading) return null;
+  if (!user) return <Navigate to="/login" replace />;
+  if (role !== 'admin') return <Navigate to="/" replace />;
+  return <>{children}</>;
 }
 
 function ProtectedRoutes() {
@@ -35,6 +45,8 @@ function ProtectedRoutes() {
         <Route path="/proximos" element={<Proximos />} />
         <Route path="/historial" element={<Historial />} />
         <Route path="/metricas" element={<Metricas />} />
+        <Route path="/admin" element={<AdminRoute><AdminClientes /></AdminRoute>} />
+        <Route path="/admin/clientes/:id" element={<AdminRoute><AdminClienteDetalle /></AdminRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Layout>

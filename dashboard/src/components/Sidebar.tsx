@@ -1,8 +1,8 @@
 import { NavLink } from 'react-router-dom';
-import { Calendar, CalendarRange, History, BarChart3, LogOut } from 'lucide-react';
+import { Calendar, CalendarRange, History, BarChart3, LogOut, Building2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
-const links = [
+const clientLinks = [
   { to: '/', label: 'Hoy', icon: Calendar },
   { to: '/proximos', label: 'Próximos', icon: CalendarRange },
   { to: '/historial', label: 'Historial', icon: History },
@@ -10,7 +10,7 @@ const links = [
 ];
 
 export function Sidebar() {
-  const { signOut, negocioNombre } = useAuth();
+  const { signOut, negocioNombre, role } = useAuth();
 
   return (
     <aside className="flex h-full w-56 flex-col border-r border-gray-200 bg-white">
@@ -19,7 +19,7 @@ export function Sidebar() {
         <p className="text-sm text-gray-500">Panel de turnos</p>
       </div>
       <nav className="flex flex-col gap-1 px-3">
-        {links.map(({ to, label, icon: Icon }) => (
+        {clientLinks.map(({ to, label, icon: Icon }) => (
           <NavLink
             key={to}
             to={to}
@@ -36,6 +36,24 @@ export function Sidebar() {
             {label}
           </NavLink>
         ))}
+        {role === 'admin' && (
+          <>
+            <div className="my-2 border-t border-gray-100" />
+            <NavLink
+              to="/admin"
+              className={({ isActive }) =>
+                `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                  isActive
+                    ? 'bg-primary-light text-primary-dark'
+                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                }`
+              }
+            >
+              <Building2 size={18} aria-hidden="true" />
+              Clientes
+            </NavLink>
+          </>
+        )}
       </nav>
       <div className="mt-auto px-3 pb-6">
         <button
