@@ -9,6 +9,8 @@ interface Cliente {
   slug: string;
   mail_dueno: string;
   calendar_id: string | null;
+  n8n_activo: boolean;
+  n8n_workflow_ids: { wf1: string; wf2: string; wf3: string; wf4: string; wf5: string } | null;
 }
 interface Empleado { id: string; nombre: string; activo: boolean; }
 interface Servicio { id: string; nombre: string; tamano: string | null; precio: number; duracion_minutos: number; activo: boolean; }
@@ -37,6 +39,9 @@ export function AdminClienteDetalle() {
   const [showSvcForm, setShowSvcForm] = useState(false);
   const [svcForm, setSvcForm] = useState({ nombre: '', tamano: 'chico', precio: '', duracion_minutos: '60' });
   const [savingSvc, setSavingSvc] = useState(false);
+
+  const [activando, setActivando] = useState(false)
+  const [n8nError, setN8nError] = useState<string | null>(null)
 
   useEffect(() => { if (id) load(id); }, [id]);
 
@@ -80,6 +85,37 @@ export function AdminClienteDetalle() {
     setShowSvcForm(false);
     setSavingSvc(false);
     load(id);
+  }
+
+  async function activarEnN8n() {
+    if (!id) return
+    setActivando(true)
+    setN8nError(null)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const token = session?.access_token
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/clonar-workflows`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ cliente_id: id }),
+        }
+      )
+      const data = await res.json()
+      if (data.ok) {
+        load(id)
+      } else {
+        setN8nError(data.error ?? 'Error desconocido')
+      }
+    } catch (e) {
+      setN8nError(String(e))
+    } finally {
+      setActivando(false)
+    }
   }
 
   if (loading) {
@@ -264,21 +300,48 @@ export function AdminClienteDetalle() {
         </div>
       </section>
 
-      {/* Instrucciones n8n */}
-      <section className="rounded-xl border border-amber-200 bg-amber-50 p-5">
-        <h2 className="mb-2 text-sm font-semibold text-amber-800">Próximo paso: activar en n8n</h2>
-        <ol className="list-inside list-decimal space-y-1 text-sm text-amber-700">
-          <li>Clonar WF1 "Recepcion - Validación" en n8n</li>
-          <li>
-            En el nodo <code className="rounded bg-amber-100 px-1">CONFIG - Cliente</code> cambiar el slug a{' '}
-            <strong>{cliente.slug}</strong>
-          </li>
-          <li>
-            Cambiar el path del webhook a <strong>{cliente.slug}-reservas</strong>
-          </li>
-          <li>Publicar el workflow clonado</li>
-          <li>Conectar el formulario de Lovable a la nueva URL del webhook</li>
-        </ol>
+      {/* Estado n8n */}
+      <section>
+        {cliente.n8n_activo ? (
+          <div className="rounded-xl border border-green-200 bg-green-50 p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="h-2 w-2 rounded-full bg-green-500" />
+              <h2 className="text-sm font-semibold text-green-800">Activo en n8n</h2>
+            </div>
+            <ul className="space-y-1 text-sm text-green-700 font-mono">
+              <li>/webhook/<strong>{cliente.slug}</strong>-reservas</li>
+              <li>/webhook/<strong>{cliente.slug}</strong>-cancelar-turno</li>
+              <li>/webhook/<strong>{cliente.slug}</strong>-modificar-turno</li>
+            </ul>
+          </div>
+        ) : (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 p-5">
+            <h2 className="mb-2 text-sm font-semibold text-amber-800">Próximo paso: activar en n8n</h2>
+            <p className="text-sm text-amber-700 mb-4">
+              Clona y configura los 5 workflows automáticamente para{' '}
+              <span className="font-mono font-semibold">{cliente.slug}</span>.
+            </p>
+            {n8nError && (
+              <p className="mb-3 rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-600">
+                {n8nError}
+              </p>
+            )}
+            <button
+              onClick={activarEnN8n}
+              disabled={activando}
+              className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700 disabled:opacity-50 flex items-center gap-2"
+            >
+              {activando ? (
+                <>
+                  <span className="h-3 w-3 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                  Activando workflows...
+                </>
+              ) : (
+                'Activar en n8n'
+              )}
+            </button>
+          </div>
+        )}
       </section>
     </div>
   );
