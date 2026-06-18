@@ -6,3 +6,9 @@ dashboard/.env
 dashboard/node_modules/
 dashboard/dist/
 *.log
+
+# Skills (installed externally via npx skills add)
+.agents/
+
+# Local Claude config (may contain API keys)
+.claude/settings.local.json
