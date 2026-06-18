@@ -2,7 +2,12 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const N8N_API_KEY = Deno.env.get('N8N_API_KEY')!
 const N8N_BASE_URL = Deno.env.get('N8N_BASE_URL') ?? 'https://bairesstudio.app.n8n.cloud'
-const ADMIN_EMAILS = (Deno.env.get('ADMIN_EMAILS') ?? '').split(',').map(s => s.trim())
+
+// Issue 7 fix: filter empty strings so an empty ADMIN_EMAILS env var doesn't grant access to ''
+const ADMIN_EMAILS = (Deno.env.get('ADMIN_EMAILS') ?? '')
+  .split(',')
+  .map(s => s.trim())
+  .filter(s => s.length > 0)
 
 // Pajaro Loco workflow IDs — source for cloning
 const SOURCE_WF1 = 'A1FUdToxhBHgoH5l'
@@ -29,12 +34,20 @@ Deno.serve(async (req: Request) => {
   )
 
   const { data: { user }, error: authError } = await supabase.auth.getUser()
-  if (authError || !user || !ADMIN_EMAILS.includes(user.email ?? '')) {
+  // Issue 7 fix: also guard against user.email being empty/undefined
+  if (authError || !user || !user.email || !ADMIN_EMAILS.includes(user.email)) {
     return json({ ok: false, error: 'Acceso denegado' }, 403)
   }
 
-  const body = await req.json()
-  const cliente_id: string = body.cliente_id
+  // Issue 4 fix: catch malformed JSON bodies before they bubble up as 500
+  let body: { cliente_id?: string }
+  try {
+    body = await req.json()
+  } catch {
+    return json({ ok: false, error: 'Body JSON inválido' }, 400)
+  }
+
+  const cliente_id: string = body.cliente_id ?? ''
   if (!cliente_id) return json({ ok: false, error: 'cliente_id requerido' }, 400)
 
   const { data: cliente, error: clienteError } = await supabase
@@ -49,13 +62,20 @@ Deno.serve(async (req: Request) => {
     slug: string; nombre: string; calendar_id: string
   }
 
+  // Issue 1 fix: track created IDs so we can roll back on partial failure
+  const createdIds: string[] = []
   try {
     // WF2 primero — WF1 necesita su nuevo ID
     const wf2 = await cloneWorkflow(SOURCE_WF2, slug, nombre, calendar_id, {})
+    createdIds.push(wf2)
     const wf1 = await cloneWorkflow(SOURCE_WF1, slug, nombre, calendar_id, { [SOURCE_WF2]: wf2 })
+    createdIds.push(wf1)
     const wf3 = await cloneWorkflow(SOURCE_WF3, slug, nombre, calendar_id, {})
+    createdIds.push(wf3)
     const wf4 = await cloneWorkflow(SOURCE_WF4, slug, nombre, calendar_id, {})
+    createdIds.push(wf4)
     const wf5 = await cloneWorkflow(SOURCE_WF5, slug, nombre, calendar_id, {})
+    createdIds.push(wf5)
 
     // Activar los 5
     await Promise.all(
@@ -66,13 +86,17 @@ Deno.serve(async (req: Request) => {
 
     const n8n_workflow_ids = { wf1, wf2, wf3, wf4, wf5 }
 
-    await supabase
+    // Issue 2 fix: validate that the Supabase update actually succeeded
+    const { error: updateError } = await supabase
       .from('clientes')
       .update({ n8n_activo: true, n8n_workflow_ids })
       .eq('id', cliente_id)
+    if (updateError) throw new Error(`Supabase update failed: ${updateError.message}`)
 
     return json({ ok: true, n8n_workflow_ids })
   } catch (e: unknown) {
+    // Issue 1 fix: best-effort cleanup of any workflows already created in n8n
+    await Promise.allSettled(createdIds.map(id => n8nDelete(`/workflows/${id}`)))
     const msg = e instanceof Error ? e.message : String(e)
     return json({ ok: false, error: msg }, 500)
   }
@@ -113,7 +137,12 @@ async function cloneWorkflow(
   parsed.name = `${parsed.name} (${slug})`
 
   const created = await n8nPost('/workflows', parsed)
-  return created.id as string
+
+  // Issue 5 fix: guard against n8n returning a response without a valid string ID
+  if (!created.id || typeof created.id !== 'string') {
+    throw new Error(`n8n no retornó un ID válido para el workflow clonado`)
+  }
+  return created.id
 }
 
 async function n8nGet(path: string): Promise<Record<string, unknown>> {
@@ -132,6 +161,14 @@ async function n8nPost(path: string, body: unknown): Promise<Record<string, unkn
   })
   if (!res.ok) throw new Error(`n8n POST ${path}: ${res.status} — ${await res.text()}`)
   return res.json()
+}
+
+// Issue 1 fix: helper used for rollback cleanup — errors are intentionally swallowed
+async function n8nDelete(path: string): Promise<void> {
+  await fetch(`${N8N_BASE_URL}/api/v1${path}`, {
+    method: 'DELETE',
+    headers: { 'X-N8N-API-KEY': N8N_API_KEY },
+  }).catch(() => {/* ignore cleanup errors */})
 }
 
 function json(data: unknown, status = 200) {
