@@ -94,6 +94,11 @@ export function AdminClienteDetalle() {
     try {
       const { data: { session } } = await supabase.auth.getSession()
       const token = session?.access_token
+      if (!token) {
+        setN8nError('Sesión expirada. Recargá la página.')
+        setActivando(false)
+        return
+      }
       const res = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/clonar-workflows`,
         {
@@ -105,6 +110,13 @@ export function AdminClienteDetalle() {
           body: JSON.stringify({ cliente_id: id }),
         }
       )
+      if (!res.ok) {
+        const contentType = res.headers.get('content-type') ?? ''
+        if (!contentType.includes('application/json')) {
+          setN8nError(`Error del servidor: ${res.status}`)
+          return
+        }
+      }
       const data = await res.json()
       if (data.ok) {
         load(id)
