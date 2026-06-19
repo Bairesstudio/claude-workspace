@@ -1,0 +1,274 @@
+{
+  "name": "Recepcion - Validación (Supabase)",
+  "nodes": [
+    {
+      "id": "17350367-07b4-4baa-bf78-9d513a24b892",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [-1900, 400],
+      "parameters": { "httpMethod": "POST", "path": "pajaro-loco-reservas", "responseMode": "responseNode", "options": {} },
+      "webhookId": "1e919322-d807-4107-aa61-cafdf92a0a15"
+    },
+    {
+      "id": "20c0fbe6-66ef-48cc-a52f-aac91497c508",
+      "name": "CONFIG - Cliente",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [-1680, 400],
+      "parameters": {
+        "resource": "row", "operation": "getAll", "tableId": "clientes",
+        "returnAll": false, "limit": 1, "filterType": "manual", "matchType": "allFilters",
+        "filters": { "conditions": [{ "keyName": "slug", "condition": "eq", "keyValue": "pajaro-loco" }] }
+      },
+      "credentials": { "supabaseApi": { "id": "pICd44ujPpoNK1Kc", "name": "Supabase account" } }
+    },
+    {
+      "id": "8de2eba8-18f4-48d6-bb71-047aa3205507",
+      "name": "Flatten + Base Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [-1460, 400],
+      "parameters": {
+        "mode": "manual", "includeOtherFields": false,
+        "assignments": { "assignments": [
+          { "id": "a1", "name": "cliente_id", "value": "={{ $('CONFIG - Cliente').item.json.id }}", "type": "string" },
+          { "id": "a2", "name": "negocio_nombre", "value": "={{ $('CONFIG - Cliente').item.json.nombre }}", "type": "string" },
+          { "id": "a3", "name": "email_duenio", "value": "={{ $('CONFIG - Cliente').item.json.mail_dueno }}", "type": "string" },
+          { "id": "a4", "name": "nombre", "value": "={{ $('Webhook').item.json.body?.name ?? $('Webhook').item.json.name }}", "type": "string" },
+          { "id": "a5", "name": "telefono", "value": "={{ $('Webhook').item.json.body?.phone ?? $('Webhook').item.json.phone }}", "type": "string" },
+          { "id": "a6", "name": "email_cliente", "value": "={{ $('Webhook').item.json.body?.email ?? $('Webhook').item.json.email }}", "type": "string" },
+          { "id": "a7", "name": "mensaje", "value": "={{ $('Webhook').item.json.body?.message ?? $('Webhook').item.json.message ?? '' }}", "type": "string" },
+          { "id": "a8", "name": "observaciones", "value": "={{ $('Webhook').item.json.body?.observaciones ?? $('Webhook').item.json.observaciones ?? '' }}", "type": "string" },
+          { "id": "a9", "name": "fecha_turno", "value": "={{ $('Webhook').item.json.body?.date ?? $('Webhook').item.json.date }}", "type": "string" },
+          { "id": "a10", "name": "hora_turno", "value": "={{ $('Webhook').item.json.body?.time ?? $('Webhook').item.json.time }}", "type": "string" },
+          { "id": "a11", "name": "empleado", "value": "={{ $('Webhook').item.json.body?.empleado ?? $('Webhook').item.json.empleado }}", "type": "string" },
+          { "id": "a12", "name": "tamano", "value": "={{ $('Webhook').item.json.body?.tamano ?? $('Webhook').item.json.tamano }}", "type": "string" },
+          { "id": "a13", "name": "mascota_nombre", "value": "={{ $('Webhook').item.json.body?.mascota_nombre ?? $('Webhook').item.json.mascota_nombre ?? '' }}", "type": "string" },
+          { "id": "a14", "name": "mascota_raza", "value": "={{ $('Webhook').item.json.body?.mascota_raza ?? $('Webhook').item.json.mascota_raza ?? '' }}", "type": "string" },
+          { "id": "a15", "name": "servicio", "value": "={{ ($('Webhook').item.json.body?.service ?? $('Webhook').item.json.service ?? '').toLowerCase().trim().normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').replace(/ /g, '_') }}", "type": "string" }
+        ] },
+        "options": {}
+      }
+    },
+    {
+      "id": "89fda778-9fd2-4dbe-b376-6972c4044783",
+      "name": "Get Servicio",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [-1240, 400],
+      "parameters": {
+        "resource": "row", "operation": "getAll", "tableId": "servicios",
+        "returnAll": false, "limit": 1, "filterType": "manual", "matchType": "allFilters",
+        "filters": { "conditions": [
+          { "keyName": "cliente_id", "condition": "eq", "keyValue": "={{ $json.cliente_id }}" },
+          { "keyName": "nombre_normalizado", "condition": "eq", "keyValue": "={{ $json.servicio }}" },
+          { "keyName": "tamano", "condition": "eq", "keyValue": "={{ $json.tamano }}" }
+        ] }
+      },
+      "credentials": { "supabaseApi": { "id": "pICd44ujPpoNK1Kc", "name": "Supabase account" } }
+    },
+    {
+      "id": "15114564-6060-4e76-8341-3a2286c508c2",
+      "name": "Get Empleado",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [-1020, 400],
+      "parameters": {
+        "resource": "row", "operation": "getAll", "tableId": "empleados",
+        "returnAll": false, "limit": 1, "filterType": "manual", "matchType": "allFilters",
+        "filters": { "conditions": [
+          { "keyName": "cliente_id", "condition": "eq", "keyValue": "={{ $('Flatten + Base Fields').item.json.cliente_id }}" },
+          { "keyName": "nombre", "condition": "eq", "keyValue": "={{ $('Flatten + Base Fields').item.json.empleado }}" }
+        ] }
+      },
+      "credentials": { "supabaseApi": { "id": "pICd44ujPpoNK1Kc", "name": "Supabase account" } }
+    },
+    {
+      "id": "f1a2b3c4-0001-4a1a-9c1a-000000000001",
+      "name": "Get Horario Empleado",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [-940, 600],
+      "parameters": {
+        "resource": "row", "operation": "getAll", "tableId": "horarios_empleado",
+        "returnAll": false, "limit": 1, "filterType": "manual", "matchType": "allFilters",
+        "filters": { "conditions": [
+          { "keyName": "empleado_id", "condition": "eq", "keyValue": "={{ $('Get Empleado').item.json.id }}" }
+        ] }
+      },
+      "credentials": { "supabaseApi": { "id": "pICd44ujPpoNK1Kc", "name": "Supabase account" } },
+      "alwaysOutputData": true
+    },
+    {
+      "id": "f1a2b3c4-0002-4a1a-9c1a-000000000002",
+      "name": "Check Día Habilitado",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-800, 600],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const flat = $('Flatten + Base Fields').item.json;\nconst empleado = $('Get Empleado').item.json;\nconst horarioRows = $input.all().map(i => i.json).filter(r => r && r.id);\nconst horario = horarioRows[0];\n\nfunction diaDeSemana(fechaStr) {\n  const dias = ['domingo','lunes','martes','miercoles','jueves','viernes','sabado'];\n  const d = new Date(fechaStr + 'T00:00:00Z');\n  return dias[d.getUTCDay()];\n}\n\nfunction lunesDeSemana(fechaStr) {\n  const d = new Date(fechaStr + 'T00:00:00Z');\n  const dow = d.getUTCDay();\n  const diff = dow === 0 ? -6 : 1 - dow;\n  d.setUTCDate(d.getUTCDate() + diff);\n  return d;\n}\n\nlet diaHabilitado = true;\n\nif (horario) {\n  const lunesTurno = lunesDeSemana(flat.fecha_turno);\n  const lunesRef = lunesDeSemana(horario.fecha_referencia);\n  const diffDias = Math.round((lunesTurno.getTime() - lunesRef.getTime()) / 86400000);\n  const diffSemanas = diffDias / 7;\n  const esSemanaA = ((diffSemanas % 2) + 2) % 2 === 0;\n  const dias = esSemanaA ? horario.dias_semana_a : horario.dias_semana_b;\n  diaHabilitado = Array.isArray(dias) && dias.includes(diaDeSemana(flat.fecha_turno));\n}\n\nreturn [{\n  json: {\n    ...flat,\n    empleado_id: empleado.id,\n    diaHabilitado,\n  }\n}];"
+      }
+    },
+    {
+      "id": "f1a2b3c4-0003-4a1a-9c1a-000000000003",
+      "name": "Switch Día",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [-580, 600],
+      "parameters": {
+        "mode": "rules",
+        "rules": { "values": [
+          {
+            "outputKey": "No Habilitado",
+            "conditions": { "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "loose" }, "combinator": "and", "conditions": [
+              { "leftValue": "={{ $json.diaHabilitado }}", "rightValue": "", "operator": { "type": "boolean", "operation": "false", "singleValue": true } }
+            ] }
+          },
+          {
+            "outputKey": "Habilitado",
+            "conditions": { "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "loose" }, "combinator": "and", "conditions": [
+              { "leftValue": "={{ $json.diaHabilitado }}", "rightValue": "", "operator": { "type": "boolean", "operation": "true", "singleValue": true } }
+            ] }
+          }
+        ] },
+        "looseTypeValidation": true,
+        "options": {}
+      }
+    },
+    {
+      "id": "f1a2b3c4-0004-4a1a-9c1a-000000000004",
+      "name": "Respond Día No Habilitado",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [-360, 700],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{ \"ok\": false, \"message\": \"Ese empleado no trabaja ese día, elegí otro día u otro profesional.\" }",
+        "options": { "responseCode": 400 }
+      }
+    },
+    {
+      "id": "e1b81a69-8a5f-43e3-8617-d384be19d9cd",
+      "name": "Build Slot",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-800, 400],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const flat = $('Flatten + Base Fields').item.json;\nconst servicio = $('Get Servicio').item.json;\nconst empleado = $('Get Empleado').item.json;\n\nfunction minutosDesdeHora(hora) {\n  const [h, m] = String(hora).split(':').map(Number);\n  return (h * 60) + (m || 0);\n}\n\nconst inicio_minutos = minutosDesdeHora(flat.hora_turno);\nconst duracion_minutos = Number(servicio.duracion_minutos ?? 60);\nconst fin_minutos = inicio_minutos + duracion_minutos;\n\nreturn [{\n  json: {\n    ...flat,\n    servicio_id: servicio.id,\n    servicio_nombre: servicio.nombre,\n    empleado_id: empleado.id,\n    precio_servicio: Number(servicio.precio ?? 0),\n    duracion_minutos,\n    inicio_minutos,\n    fin_minutos,\n  }\n}];"
+      }
+    },
+    {
+      "id": "4630440d-9283-4927-bd97-d53477a93b95",
+      "name": "Get Turnos del día",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [-580, 400],
+      "parameters": {
+        "resource": "row", "operation": "getAll", "tableId": "turnos",
+        "returnAll": true, "filterType": "manual", "matchType": "allFilters",
+        "filters": { "conditions": [
+          { "keyName": "cliente_id", "condition": "eq", "keyValue": "={{ $('Build Slot').item.json.cliente_id }}" },
+          { "keyName": "empleado_id", "condition": "eq", "keyValue": "={{ $('Build Slot').item.json.empleado_id }}" },
+          { "keyName": "fecha", "condition": "eq", "keyValue": "={{ $('Build Slot').item.json.fecha_turno }}" },
+          { "keyName": "estado", "condition": "eq", "keyValue": "confirmado" }
+        ] }
+      },
+      "credentials": { "supabaseApi": { "id": "pICd44ujPpoNK1Kc", "name": "Supabase account" } },
+      "alwaysOutputData": true
+    },
+    {
+      "id": "b64a5645-3ceb-4d66-8897-93f7f1077701",
+      "name": "Check Overlap",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-360, 400],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "const nuevo = $('Build Slot').item.json;\nconst existentes = $input.all();\n\nlet isOccupied = false;\nlet turnoConflictivo = null;\n\nfor (const item of existentes) {\n  const row = item.json;\n  if (!row || !row.id) continue;\n  const seSuperpone = nuevo.inicio_minutos < row.fin_minutos && nuevo.fin_minutos > row.inicio_minutos;\n  if (seSuperpone) {\n    isOccupied = true;\n    turnoConflictivo = row;\n    break;\n  }\n}\n\nreturn [{\n  json: {\n    ...nuevo,\n    isOccupied,\n    turno_conflictivo: turnoConflictivo,\n  }\n}];"
+      }
+    },
+    {
+      "id": "9c96f791-f561-4157-9998-1946b04b97fd",
+      "name": "Switch",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [-140, 400],
+      "parameters": {
+        "mode": "rules",
+        "rules": { "values": [
+          {
+            "outputKey": "Occupied",
+            "conditions": { "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "loose" }, "combinator": "and", "conditions": [
+              { "leftValue": "={{ $json.isOccupied }}", "rightValue": "", "operator": { "type": "boolean", "operation": "true", "singleValue": true } }
+            ] }
+          },
+          {
+            "outputKey": "Free",
+            "conditions": { "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "loose" }, "combinator": "and", "conditions": [
+              { "leftValue": "={{ $json.isOccupied }}", "rightValue": "", "operator": { "type": "boolean", "operation": "false", "singleValue": true } }
+            ] }
+          }
+        ] },
+        "looseTypeValidation": true,
+        "options": {}
+      }
+    },
+    {
+      "id": "a4461058-2c70-4adf-bb12-ef0b6ce9d374",
+      "name": "Respond Ocupado",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [80, 280],
+      "parameters": { "respondWith": "json", "responseBody": "{ \"ok\": false, \"message\": \"Ese horario ya está ocupado, elegí otro.\" }", "options": { "responseCode": 400 } }
+    },
+    {
+      "id": "24644147-1822-45a2-8a72-1180baf2ca06",
+      "name": "Respond Confirmado",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [80, 520],
+      "parameters": { "respondWith": "json", "responseBody": "{ \"ok\": true, \"message\": \"Turno reservado con éxito.\" }", "options": { "responseCode": 200 } }
+    },
+    {
+      "id": "9d75afd5-70dc-4883-848a-344b9eda65ca",
+      "name": "Call Reservas - Confirmación",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [320, 520],
+      "parameters": {
+        "source": "database",
+        "workflowId": { "__rl": true, "mode": "list", "value": "RUzNBpw8OMIWkvzN", "cachedResultName": "Reservas - Confirmación (Supabase)" },
+        "workflowInputs": { "mappingMode": "defineBelow", "value": {}, "matchingColumns": [], "schema": [], "attemptToConvertTypes": false, "convertFieldsToString": true },
+        "mode": "once",
+        "options": { "waitForSubWorkflow": false }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": { "main": [[{ "node": "CONFIG - Cliente", "type": "main", "index": 0 }]] },
+    "CONFIG - Cliente": { "main": [[{ "node": "Flatten + Base Fields", "type": "main", "index": 0 }]] },
+    "Flatten + Base Fields": { "main": [[{ "node": "Get Servicio", "type": "main", "index": 0 }]] },
+    "Get Servicio": { "main": [[{ "node": "Get Empleado", "type": "main", "index": 0 }]] },
+    "Get Empleado": { "main": [[{ "node": "Get Horario Empleado", "type": "main", "index": 0 }]] },
+    "Get Horario Empleado": { "main": [[{ "node": "Check Día Habilitado", "type": "main", "index": 0 }]] },
+    "Check Día Habilitado": { "main": [[{ "node": "Switch Día", "type": "main", "index": 0 }]] },
+    "Switch Día": { "main": [
+      [{ "node": "Respond Día No Habilitado", "type": "main", "index": 0 }],
+      [{ "node": "Build Slot", "type": "main", "index": 0 }]
+    ] },
+    "Build Slot": { "main": [[{ "node": "Get Turnos del día", "type": "main", "index": 0 }]] },
+    "Get Turnos del día": { "main": [[{ "node": "Check Overlap", "type": "main", "index": 0 }]] },
+    "Check Overlap": { "main": [[{ "node": "Switch", "type": "main", "index": 0 }]] },
+    "Switch": { "main": [
+      [{ "node": "Respond Ocupado", "type": "main", "index": 0 }],
+      [{ "node": "Respond Confirmado", "type": "main", "index": 0 }]
+    ] },
+    "Respond Confirmado": { "main": [[{ "node": "Call Reservas - Confirmación", "type": "main", "index": 0 }]] }
+  }
+}
