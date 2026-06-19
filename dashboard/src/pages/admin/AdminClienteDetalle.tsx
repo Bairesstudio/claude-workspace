@@ -14,6 +14,34 @@ interface Cliente {
 }
 interface Empleado { id: string; nombre: string; activo: boolean; }
 interface Servicio { id: string; nombre: string; tamano: string | null; precio: number; duracion_minutos: number; activo: boolean; }
+interface HorarioEmpleado {
+  id: string;
+  empleado_id: string;
+  fecha_referencia: string;
+  dias_semana_a: string[];
+  dias_semana_b: string[];
+}
+
+const DIAS: { value: string; label: string }[] = [
+  { value: 'lunes', label: 'Lun' },
+  { value: 'martes', label: 'Mar' },
+  { value: 'miercoles', label: 'Mié' },
+  { value: 'jueves', label: 'Jue' },
+  { value: 'viernes', label: 'Vie' },
+  { value: 'sabado', label: 'Sáb' },
+  { value: 'domingo', label: 'Dom' },
+];
+
+function mismosDias(a: string[], b: string[]) {
+  if (a.length !== b.length) return false;
+  const sortedA = [...a].sort();
+  const sortedB = [...b].sort();
+  return sortedA.every((d, i) => d === sortedB[i]);
+}
+
+function hoyISO() {
+  return new Date().toISOString().slice(0, 10);
+}
 
 function normalizarNombre(str: string) {
   return str
@@ -40,6 +68,16 @@ export function AdminClienteDetalle() {
   const [svcForm, setSvcForm] = useState({ nombre: '', tamano: 'chico', precio: '', duracion_minutos: '60' });
   const [savingSvc, setSavingSvc] = useState(false);
 
+  const [horarios, setHorarios] = useState<Record<string, HorarioEmpleado>>({});
+  const [editingHorarioFor, setEditingHorarioFor] = useState<string | null>(null);
+  const [horarioForm, setHorarioForm] = useState<{
+    diasA: string[];
+    diasB: string[];
+    alterna: boolean;
+    fechaReferencia: string;
+  }>({ diasA: [], diasB: [], alterna: false, fechaReferencia: hoyISO() });
+  const [savingHorario, setSavingHorario] = useState(false);
+
   const [activando, setActivando] = useState(false)
   const [n8nError, setN8nError] = useState<string | null>(null)
 
@@ -55,6 +93,20 @@ export function AdminClienteDetalle() {
     setCliente(cl);
     setEmpleados(emps ?? []);
     setServicios(svcs ?? []);
+
+    const empIds = (emps ?? []).map(e => e.id);
+    if (empIds.length > 0) {
+      const { data: hors } = await supabase
+        .from('horarios_empleado')
+        .select('*')
+        .in('empleado_id', empIds);
+      const map: Record<string, HorarioEmpleado> = {};
+      for (const h of hors ?? []) map[h.empleado_id] = h;
+      setHorarios(map);
+    } else {
+      setHorarios({});
+    }
+
     setLoading(false);
   }
 
@@ -67,6 +119,46 @@ export function AdminClienteDetalle() {
     setShowEmpForm(false);
     setSavingEmp(false);
     load(id);
+  }
+
+  function abrirHorario(empleadoId: string) {
+    const existente = horarios[empleadoId];
+    if (existente) {
+      setHorarioForm({
+        diasA: existente.dias_semana_a,
+        diasB: existente.dias_semana_b,
+        alterna: !mismosDias(existente.dias_semana_a, existente.dias_semana_b),
+        fechaReferencia: existente.fecha_referencia,
+      });
+    } else {
+      setHorarioForm({ diasA: [], diasB: [], alterna: false, fechaReferencia: hoyISO() });
+    }
+    setEditingHorarioFor(empleadoId);
+  }
+
+  function toggleDia(grupo: 'diasA' | 'diasB', dia: string) {
+    setHorarioForm(f => {
+      const actual = f[grupo];
+      const nuevo = actual.includes(dia) ? actual.filter(d => d !== dia) : [...actual, dia];
+      return { ...f, [grupo]: nuevo };
+    });
+  }
+
+  async function guardarHorario(empleadoId: string) {
+    setSavingHorario(true);
+    const diasB = horarioForm.alterna ? horarioForm.diasB : horarioForm.diasA;
+    await supabase.from('horarios_empleado').upsert(
+      {
+        empleado_id: empleadoId,
+        fecha_referencia: horarioForm.fechaReferencia,
+        dias_semana_a: horarioForm.diasA,
+        dias_semana_b: diasB,
+      },
+      { onConflict: 'empleado_id' }
+    );
+    setSavingHorario(false);
+    setEditingHorarioFor(null);
+    if (id) load(id);
   }
 
   async function addServicio(e: React.FormEvent) {
@@ -197,11 +289,108 @@ export function AdminClienteDetalle() {
             <p className="py-6 text-center text-sm text-gray-400">Sin empleados todavía</p>
           ) : (
             empleados.map(emp => (
-              <div key={emp.id} className="flex items-center justify-between px-4 py-3">
-                <span className="text-sm font-medium text-gray-900">{emp.nombre}</span>
-                <span className={`rounded-full px-2 py-0.5 text-xs ${emp.activo ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                  {emp.activo ? 'Activo' : 'Inactivo'}
-                </span>
+              <div key={emp.id} className="px-4 py-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-gray-900">{emp.nombre}</span>
+                  <div className="flex items-center gap-3">
+                    <span className={`rounded-full px-2 py-0.5 text-xs ${emp.activo ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                      {emp.activo ? 'Activo' : 'Inactivo'}
+                    </span>
+                    <button
+                      onClick={() => editingHorarioFor === emp.id ? setEditingHorarioFor(null) : abrirHorario(emp.id)}
+                      className="text-sm font-medium text-primary hover:text-primary-dark"
+                    >
+                      {horarios[emp.id] ? 'Horario' : 'Sin horario (todos los días)'}
+                    </button>
+                  </div>
+                </div>
+
+                {editingHorarioFor === emp.id && (
+                  <div className="mt-3 rounded-lg border border-gray-200 bg-gray-50 p-3 space-y-3">
+                    <div>
+                      <label className="mb-1 block text-xs font-medium text-gray-600">
+                        {horarioForm.alterna ? 'Días - Semana A' : 'Días que trabaja'}
+                      </label>
+                      <div className="flex gap-1.5">
+                        {DIAS.map(d => (
+                          <button
+                            key={d.value}
+                            type="button"
+                            onClick={() => toggleDia('diasA', d.value)}
+                            className={`rounded-md px-2 py-1 text-xs font-medium ${
+                              horarioForm.diasA.includes(d.value)
+                                ? 'bg-primary text-white'
+                                : 'bg-white text-gray-600 border border-gray-300'
+                            }`}
+                          >
+                            {d.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <label className="flex items-center gap-2 text-xs text-gray-600">
+                      <input
+                        type="checkbox"
+                        checked={horarioForm.alterna}
+                        onChange={e => setHorarioForm(f => ({ ...f, alterna: e.target.checked }))}
+                      />
+                      ¿Alterna semanas? (semana A / semana B)
+                    </label>
+
+                    {horarioForm.alterna && (
+                      <>
+                        <div>
+                          <label className="mb-1 block text-xs font-medium text-gray-600">Días - Semana B</label>
+                          <div className="flex gap-1.5">
+                            {DIAS.map(d => (
+                              <button
+                                key={d.value}
+                                type="button"
+                                onClick={() => toggleDia('diasB', d.value)}
+                                className={`rounded-md px-2 py-1 text-xs font-medium ${
+                                  horarioForm.diasB.includes(d.value)
+                                    ? 'bg-primary text-white'
+                                    : 'bg-white text-gray-600 border border-gray-300'
+                                }`}
+                              >
+                                {d.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        <div>
+                          <label className="mb-1 block text-xs font-medium text-gray-600">
+                            Fecha de referencia (un día que sabés que fue semana A)
+                          </label>
+                          <input
+                            type="date"
+                            value={horarioForm.fechaReferencia}
+                            onChange={e => setHorarioForm(f => ({ ...f, fechaReferencia: e.target.value }))}
+                            className="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                          />
+                        </div>
+                      </>
+                    )}
+
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => guardarHorario(emp.id)}
+                        disabled={savingHorario || horarioForm.diasA.length === 0}
+                        className="rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-white hover:bg-primary-dark disabled:opacity-50"
+                      >
+                        {savingHorario ? '...' : 'Guardar horario'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setEditingHorarioFor(null)}
+                        className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50"
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             ))
           )}
