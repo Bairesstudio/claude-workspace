@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Plus } from 'lucide-react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { ArrowLeft, Plus, Pencil, Trash2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
 interface Cliente {
@@ -9,6 +9,7 @@ interface Cliente {
   slug: string;
   mail_dueno: string;
   calendar_id: string | null;
+  plan: string;
   n8n_activo: boolean;
   n8n_workflow_ids: { wf1: string; wf2: string; wf3: string; wf4: string; wf5: string } | null;
 }
@@ -55,6 +56,7 @@ function normalizarNombre(str: string) {
 
 export function AdminClienteDetalle() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [cliente, setCliente] = useState<Cliente | null>(null);
   const [empleados, setEmpleados] = useState<Empleado[]>([]);
   const [servicios, setServicios] = useState<Servicio[]>([]);
@@ -80,6 +82,13 @@ export function AdminClienteDetalle() {
 
   const [activando, setActivando] = useState(false)
   const [n8nError, setN8nError] = useState<string | null>(null)
+
+  const [editingCliente, setEditingCliente] = useState(false);
+  const [clienteForm, setClienteForm] = useState({ nombre: '', mail_dueno: '', calendar_id: '', plan: 'estandar' });
+  const [savingCliente, setSavingCliente] = useState(false);
+
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deletingCliente, setDeletingCliente] = useState(false);
 
   useEffect(() => { if (id) load(id); }, [id]);
 
@@ -119,6 +128,40 @@ export function AdminClienteDetalle() {
     setShowEmpForm(false);
     setSavingEmp(false);
     load(id);
+  }
+
+  function abrirEdicionCliente() {
+    if (!cliente) return;
+    setClienteForm({
+      nombre: cliente.nombre,
+      mail_dueno: cliente.mail_dueno,
+      calendar_id: cliente.calendar_id ?? '',
+      plan: cliente.plan,
+    });
+    setEditingCliente(true);
+  }
+
+  async function guardarCliente(e: React.FormEvent) {
+    e.preventDefault();
+    if (!id) return;
+    setSavingCliente(true);
+    await supabase.from('clientes').update({
+      nombre: clienteForm.nombre,
+      mail_dueno: clienteForm.mail_dueno,
+      calendar_id: clienteForm.calendar_id || null,
+      plan: clienteForm.plan,
+    }).eq('id', id);
+    setSavingCliente(false);
+    setEditingCliente(false);
+    load(id);
+  }
+
+  async function borrarCliente() {
+    if (!id) return;
+    setDeletingCliente(true);
+    await supabase.from('clientes').delete().eq('id', id);
+    setDeletingCliente(false);
+    navigate('/admin');
   }
 
   function abrirHorario(empleadoId: string) {
@@ -238,10 +281,109 @@ export function AdminClienteDetalle() {
         <Link to="/admin" className="mb-4 flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900">
           <ArrowLeft size={16} /> Volver a clientes
         </Link>
-        <h1 className="text-2xl font-bold text-gray-900">{cliente.nombre}</h1>
-        <p className="mt-1 text-sm text-gray-500">
-          {cliente.mail_dueno} · webhook: <span className="font-mono">{cliente.slug}-reservas</span>
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">{cliente.nombre}</h1>
+            <p className="mt-1 text-sm text-gray-500">
+              {cliente.mail_dueno} · webhook: <span className="font-mono">{cliente.slug}-reservas</span> · plan {cliente.plan}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={abrirEdicionCliente}
+              className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              <Pencil size={14} /> Editar
+            </button>
+            {confirmDelete ? (
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-red-600">¿Borrar definitivamente?</span>
+                <button
+                  onClick={borrarCliente}
+                  disabled={deletingCliente}
+                  className="rounded-lg bg-red-600 px-3 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50"
+                >
+                  {deletingCliente ? '...' : 'Sí, borrar'}
+                </button>
+                <button
+                  onClick={() => setConfirmDelete(false)}
+                  className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50"
+                >
+                  Cancelar
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setConfirmDelete(true)}
+                className="flex items-center gap-1.5 rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
+              >
+                <Trash2 size={14} /> Borrar cliente
+              </button>
+            )}
+          </div>
+        </div>
+
+        {editingCliente && (
+          <form onSubmit={guardarCliente} className="mt-4 rounded-xl border border-gray-200 bg-white p-4 space-y-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div>
+                <label className="mb-1 block text-xs font-medium text-gray-600">Nombre del negocio</label>
+                <input
+                  required
+                  value={clienteForm.nombre}
+                  onChange={e => setClienteForm(f => ({ ...f, nombre: e.target.value }))}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-gray-600">Email del dueño</label>
+                <input
+                  required
+                  type="email"
+                  value={clienteForm.mail_dueno}
+                  onChange={e => setClienteForm(f => ({ ...f, mail_dueno: e.target.value }))}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-gray-600">Gmail del negocio (Calendar)</label>
+                <input
+                  type="email"
+                  value={clienteForm.calendar_id}
+                  onChange={e => setClienteForm(f => ({ ...f, calendar_id: e.target.value }))}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-gray-600">Plan</label>
+                <select
+                  value={clienteForm.plan}
+                  onChange={e => setClienteForm(f => ({ ...f, plan: e.target.value }))}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                >
+                  <option value="estandar">Estándar</option>
+                  <option value="pro">Pro</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button
+                type="submit"
+                disabled={savingCliente}
+                className="rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-white hover:bg-primary-dark disabled:opacity-50"
+              >
+                {savingCliente ? '...' : 'Guardar cambios'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditingCliente(false)}
+                className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50"
+              >
+                Cancelar
+              </button>
+            </div>
+          </form>
+        )}
       </div>
 
       {/* Empleados */}

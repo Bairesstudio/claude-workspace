@@ -26,7 +26,7 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
 }
 
 function ProtectedRoutes() {
-  const { user, loading } = useAuth();
+  const { user, role, loading } = useAuth();
 
   if (loading) {
     return (
@@ -41,7 +41,7 @@ function ProtectedRoutes() {
   return (
     <Layout>
       <Routes>
-        <Route path="/" element={<Hoy />} />
+        <Route path="/" element={role === 'admin' ? <Navigate to="/admin" replace /> : <Hoy />} />
         <Route path="/proximos" element={<Proximos />} />
         <Route path="/historial" element={<Historial />} />
         <Route path="/metricas" element={<Metricas />} />
