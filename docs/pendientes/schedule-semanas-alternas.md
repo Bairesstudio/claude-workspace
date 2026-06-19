@@ -1,5 +1,10 @@
 # Pendiente: Soporte de horarios con semanas alternas en Supabase
 
+> **Resuelto** el 2026-06-19. Ver spec en `docs/superpowers/specs/2026-06-18-horarios-semanas-alternas-design.md`
+> y plan en `docs/superpowers/plans/2026-06-18-horarios-semanas-alternas.md`.
+> El diseño final es **por empleado** (no por cliente entero) — pensado para que escale a negocios
+> con varios empleados de turnos rotativos, no solo el caso de Pajaro Loco/Soledad.
+
 ## Contexto
 
 Pajaro Loco (cliente de prueba) trabaja en semanas alternadas:
