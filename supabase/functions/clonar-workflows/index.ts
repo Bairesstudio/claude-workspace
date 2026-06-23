@@ -9,12 +9,12 @@ const ADMIN_EMAILS = (Deno.env.get('ADMIN_EMAILS') ?? '')
   .map(s => s.trim())
   .filter(s => s.length > 0)
 
-// Pajaro Loco workflow IDs — source for cloning
-const SOURCE_WF1 = 'A1FUdToxhBHgoH5l'
-const SOURCE_WF2 = 'RUzNBpw8OMIWkvzN'
-const SOURCE_WF3 = 'dMkN3rooLHKZcNVq'
-const SOURCE_WF4 = 'ezUR5YsDGsejxCSU'
-const SOURCE_WF5 = 'iiVFmH2w1yqqjHhU'
+// Template workflow IDs — source for cloning (Templates Maestros folder)
+const SOURCE_WF1 = '0CKZG6roonivPpHo'
+const SOURCE_WF2 = 'Fm9htwARw2xrWnQK'
+const SOURCE_WF3 = 'vE709Gqvnmnpqv1r'
+const SOURCE_WF4 = '6rQoMxp0cMSNNSJq'
+const SOURCE_WF5 = 'OaYT1UmswAkX9iU7'
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
@@ -134,10 +134,10 @@ async function cloneWorkflow(
     settings: source.settings ?? {},
   })
 
-  // Reemplazar todos los valores hardcodeados de Pajaro Loco
-  payload = payload.replaceAll('pajaro-loco', slug)
-  payload = payload.replaceAll('ultraguschi@gmail.com', calendarId)
-  payload = payload.replaceAll('Pajaro Loco', nombre)
+  // Reemplazar placeholders del template
+  payload = payload.replaceAll('__SLUG__', slug)
+  payload = payload.replaceAll('__CALENDAR_ID__', calendarId)
+  payload = payload.replaceAll('__NOMBRE__', nombre)
 
   // Reemplazar IDs de workflows fuente → IDs clonados (ej: ref WF2 en WF1)
   for (const [from, to] of Object.entries(idReplacements)) {
