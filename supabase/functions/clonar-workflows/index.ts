@@ -62,6 +62,17 @@ Deno.serve(async (req: Request) => {
     slug: string; nombre: string; calendar_id: string
   }
 
+  // Pajaro Loco es el cliente FUENTE de SOURCE_WF1..5 (sus workflows se armaron a mano,
+  // no via este clonador). Si se le aplica este endpoint a si mismo, los replaceAll()
+  // de abajo son no-ops (slug/nombre/mail ya son los suyos) y terminaria duplicando sus
+  // propios workflows productivos en n8n, generando webhooks en conflicto.
+  if (slug === 'pajaro-loco') {
+    return json({
+      ok: false,
+      error: 'Pajaro Loco ya tiene sus workflows productivos creados a mano. Este endpoint clona los workflows fuente de Pajaro Loco para OTROS clientes; ejecutarlo sobre Pajaro Loco duplicaria sus propios workflows.',
+    }, 400)
+  }
+
   // Issue 1 fix: track created IDs so we can roll back on partial failure
   const createdIds: string[] = []
   try {

@@ -11,35 +11,22 @@ const clientLinks = [
 
 export function Sidebar() {
   const { signOut, negocioNombre, role } = useAuth();
+  const links = role === 'admin' ? [{ to: '/admin', label: 'Clientes', icon: Building2 }] : clientLinks;
 
   return (
-    <aside className="flex h-full w-56 flex-col border-r border-gray-200 bg-white">
-      <div className="px-6 py-6">
-        <p className="text-lg font-semibold text-gray-900">{role === 'admin' ? 'Baires Studio' : (negocioNombre || '—')}</p>
-        <p className="text-sm text-gray-500">{role === 'admin' ? 'Panel admin' : 'Panel de turnos'}</p>
-      </div>
-      <nav className="flex flex-col gap-1 px-3">
-        {role !== 'admin' && clientLinks.map(({ to, label, icon: Icon }) => (
-          <NavLink
-            key={to}
-            to={to}
-            end={to === '/'}
-            className={({ isActive }) =>
-              `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                isActive
-                  ? 'bg-primary-light text-primary-dark'
-                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-              }`
-            }
-          >
-            <Icon size={18} aria-hidden="true" />
-            {label}
-          </NavLink>
-        ))}
-        {role === 'admin' && (
-          <>
+    <>
+      {/* Desktop: sidebar fija a la izquierda */}
+      <aside className="hidden h-full w-56 flex-col border-r border-gray-200 bg-white md:flex">
+        <div className="px-6 py-6">
+          <p className="text-lg font-semibold text-gray-900">{role === 'admin' ? 'Baires Studio' : (negocioNombre || '—')}</p>
+          <p className="text-sm text-gray-500">{role === 'admin' ? 'Panel admin' : 'Panel de turnos'}</p>
+        </div>
+        <nav className="flex flex-col gap-1 px-3">
+          {links.map(({ to, label, icon: Icon }) => (
             <NavLink
-              to="/admin"
+              key={to}
+              to={to}
+              end={to === '/'}
               className={({ isActive }) =>
                 `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                   isActive
@@ -48,21 +35,50 @@ export function Sidebar() {
                 }`
               }
             >
-              <Building2 size={18} aria-hidden="true" />
-              Clientes
+              <Icon size={18} aria-hidden="true" />
+              {label}
             </NavLink>
-          </>
-        )}
-      </nav>
-      <div className="mt-auto px-3 pb-6">
+          ))}
+        </nav>
+        <div className="mt-auto px-3 pb-6">
+          <button
+            onClick={signOut}
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900"
+          >
+            <LogOut size={18} aria-hidden="true" />
+            Cerrar sesión
+          </button>
+        </div>
+      </aside>
+
+      {/* Mobile: barra superior + tabs inferiores */}
+      <header className="flex items-center justify-between border-b border-gray-200 bg-white px-4 py-3 md:hidden">
+        <p className="text-base font-semibold text-gray-900">{role === 'admin' ? 'Baires Studio' : (negocioNombre || '—')}</p>
         <button
           onClick={signOut}
-          className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900"
+          className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-900"
+          aria-label="Cerrar sesión"
         >
-          <LogOut size={18} aria-hidden="true" />
-          Cerrar sesión
+          <LogOut size={20} aria-hidden="true" />
         </button>
-      </div>
-    </aside>
+      </header>
+      <nav className="fixed inset-x-0 bottom-0 z-10 flex border-t border-gray-200 bg-white pb-[env(safe-area-inset-bottom)] md:hidden">
+        {links.map(({ to, label, icon: Icon }) => (
+          <NavLink
+            key={to}
+            to={to}
+            end={to === '/'}
+            className={({ isActive }) =>
+              `flex flex-1 flex-col items-center gap-1 py-2.5 text-xs font-medium ${
+                isActive ? 'text-primary-dark' : 'text-gray-500'
+              }`
+            }
+          >
+            <Icon size={20} aria-hidden="true" />
+            {label}
+          </NavLink>
+        ))}
+      </nav>
+    </>
   );
 }

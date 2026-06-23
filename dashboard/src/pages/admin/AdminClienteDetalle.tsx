@@ -657,6 +657,15 @@ export function AdminClienteDetalle() {
               <li>/webhook/<strong>{cliente.slug}</strong>-modificar-turno</li>
             </ul>
           </div>
+        ) : cliente.slug === 'pajaro-loco' ? (
+          <div className="rounded-xl border border-gray-200 bg-gray-50 p-5">
+            <h2 className="mb-2 text-sm font-semibold text-gray-700">Pajaro Loco no usa el clonador</h2>
+            <p className="text-sm text-gray-600">
+              Sus 5 workflows se armaron a mano en n8n (es el cliente fuente que usa "Activar en n8n"
+              para clonarle workflows a los demás). Activar este botón para Pajaro Loco duplicaría
+              sus propios workflows productivos — está bloqueado también del lado del servidor.
+            </p>
+          </div>
         ) : (
           <div className="rounded-xl border border-amber-200 bg-amber-50 p-5">
             <h2 className="mb-2 text-sm font-semibold text-amber-800">Próximo paso: activar en n8n</h2>
