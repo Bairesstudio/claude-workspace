@@ -3,7 +3,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 const N8N_API_KEY = Deno.env.get('N8N_API_KEY')!
 const N8N_BASE_URL = Deno.env.get('N8N_BASE_URL') ?? 'https://bairesstudio.app.n8n.cloud'
 
-// Issue 7 fix: filter empty strings so an empty ADMIN_EMAILS env var doesn't grant access to ''
+// filter empty strings so an empty ADMIN_EMAILS env var doesn't grant access to ''
 const ADMIN_EMAILS = (Deno.env.get('ADMIN_EMAILS') ?? '')
   .split(',')
   .map(s => s.trim())
@@ -34,17 +34,15 @@ Deno.serve(async (req: Request) => {
   )
 
   const { data: { user }, error: authError } = await supabase.auth.getUser()
-  // Issue 7 fix: also guard against user.email being empty/undefined
   if (authError || !user || !user.email || !ADMIN_EMAILS.includes(user.email)) {
     return json({ ok: false, error: 'Acceso denegado' }, 403)
   }
 
-  // Issue 4 fix: catch malformed JSON bodies before they bubble up as 500
   let body: { cliente_id?: string }
   try {
     body = await req.json()
   } catch {
-    return json({ ok: false, error: 'Body JSON inválido' }, 400)
+    return json({ ok: false, error: 'Body JSON invalido' }, 400)
   }
 
   const cliente_id: string = body.cliente_id ?? ''
@@ -62,21 +60,18 @@ Deno.serve(async (req: Request) => {
     slug: string; nombre: string; calendar_id: string
   }
 
-  // Pajaro Loco es el cliente FUENTE de SOURCE_WF1..5 (sus workflows se armaron a mano,
-  // no via este clonador). Si se le aplica este endpoint a si mismo, los replaceAll()
-  // de abajo son no-ops (slug/nombre/mail ya son los suyos) y terminaria duplicando sus
-  // propios workflows productivos en n8n, generando webhooks en conflicto.
+  // Pajaro Loco's production workflows were created manually — cloning them would
+  // duplicate webhooks and break the live setup.
   if (slug === 'pajaro-loco') {
     return json({
       ok: false,
-      error: 'Pajaro Loco ya tiene sus workflows productivos creados a mano. Este endpoint clona los workflows fuente de Pajaro Loco para OTROS clientes; ejecutarlo sobre Pajaro Loco duplicaria sus propios workflows.',
+      error: 'Pajaro Loco ya tiene sus workflows productivos creados a mano. Este endpoint es para nuevos clientes.',
     }, 400)
   }
 
-  // Issue 1 fix: track created IDs so we can roll back on partial failure
   const createdIds: string[] = []
   try {
-    // WF2 primero — WF1 necesita su nuevo ID
+    // WF2 must be cloned first — WF1 references its ID as a sub-workflow
     const wf2 = await cloneWorkflow(SOURCE_WF2, slug, nombre, calendar_id, {})
     createdIds.push(wf2)
     const wf1 = await cloneWorkflow(SOURCE_WF1, slug, nombre, calendar_id, { [SOURCE_WF2]: wf2 })
@@ -88,16 +83,14 @@ Deno.serve(async (req: Request) => {
     const wf5 = await cloneWorkflow(SOURCE_WF5, slug, nombre, calendar_id, {})
     createdIds.push(wf5)
 
-    // Activar los 5
+    // WF2 activated first because WF1 calls it as a sub-workflow
+    await n8nPost(`/workflows/${wf2}/activate`, {})
     await Promise.all(
-      [wf1, wf2, wf3, wf4, wf5].map(id =>
-        n8nPost(`/workflows/${id}/activate`, {})
-      )
+      [wf1, wf3, wf4, wf5].map(id => n8nPost(`/workflows/${id}/activate`, {}))
     )
 
     const n8n_workflow_ids = { wf1, wf2, wf3, wf4, wf5 }
 
-    // Issue 2 fix: validate that the Supabase update actually succeeded
     const { error: updateError } = await supabase
       .from('clientes')
       .update({ n8n_activo: true, n8n_workflow_ids })
@@ -106,7 +99,6 @@ Deno.serve(async (req: Request) => {
 
     return json({ ok: true, n8n_workflow_ids })
   } catch (e: unknown) {
-    // Issue 1 fix: best-effort cleanup of any workflows already created in n8n
     await Promise.allSettled(createdIds.map(id => n8nDelete(`/workflows/${id}`)))
     const msg = e instanceof Error ? e.message : String(e)
     return json({ ok: false, error: msg }, 500)
@@ -122,7 +114,7 @@ async function cloneWorkflow(
 ): Promise<string> {
   const source = await n8nGet(`/workflows/${sourceId}`)
 
-  // Quitar campos no portables de los nodos (webhookId genera conflictos)
+  // webhookId causes conflicts when cloning — strip it from each node
   const nodes = (source.nodes as Record<string, unknown>[]).map(
     ({ webhookId: _wh, ...node }) => node
   )
@@ -134,12 +126,10 @@ async function cloneWorkflow(
     settings: source.settings ?? {},
   })
 
-  // Reemplazar placeholders del template
   payload = payload.replaceAll('__SLUG__', slug)
   payload = payload.replaceAll('__CALENDAR_ID__', calendarId)
   payload = payload.replaceAll('__NOMBRE__', nombre)
 
-  // Reemplazar IDs de workflows fuente → IDs clonados (ej: ref WF2 en WF1)
   for (const [from, to] of Object.entries(idReplacements)) {
     payload = payload.replaceAll(from, to)
   }
@@ -149,9 +139,8 @@ async function cloneWorkflow(
 
   const created = await n8nPost('/workflows', parsed)
 
-  // Issue 5 fix: guard against n8n returning a response without a valid string ID
   if (!created.id || typeof created.id !== 'string') {
-    throw new Error(`n8n no retornó un ID válido para el workflow clonado`)
+    throw new Error(`n8n no retorno un ID valido para el workflow clonado`)
   }
   return created.id
 }
@@ -174,12 +163,11 @@ async function n8nPost(path: string, body: unknown): Promise<Record<string, unkn
   return res.json()
 }
 
-// Issue 1 fix: helper used for rollback cleanup — errors are intentionally swallowed
 async function n8nDelete(path: string): Promise<void> {
   await fetch(`${N8N_BASE_URL}/api/v1${path}`, {
     method: 'DELETE',
     headers: { 'X-N8N-API-KEY': N8N_API_KEY },
-  }).catch(() => {/* ignore cleanup errors */})
+  }).catch(() => {})
 }
 
 function json(data: unknown, status = 200) {
