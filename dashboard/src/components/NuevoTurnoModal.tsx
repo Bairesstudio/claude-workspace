@@ -89,7 +89,7 @@ export function NuevoTurnoModal({ onClose, onSuccess }: Props) {
       onSuccess();
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'No se pudo guardar el turno.');
+      setError(err instanceof Error ? err.message : JSON.stringify(err));
     } finally {
       setSaving(false);
     }
