@@ -61,8 +61,16 @@ export function Metricas() {
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={metricas.porServicio}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="nombre" tick={{ fontSize: 12 }} />
-                  <YAxis tick={{ fontSize: 12 }} />
+                  <XAxis
+                    dataKey="nombre"
+                    tick={{ fontSize: 11 }}
+                    interval={0}
+                    angle={-30}
+                    textAnchor="end"
+                    height={55}
+                    tickLine={false}
+                  />
+                  <YAxis tick={{ fontSize: 11 }} width={65} tickFormatter={(v) => formatoPrecio.format(v)} />
                   <Tooltip formatter={(value) => formatoPrecio.format(Number(value))} />
                   <Bar dataKey="total" fill="var(--color-primary)" radius={[4, 4, 0, 0]} />
                 </BarChart>
