@@ -71,7 +71,6 @@ export function NuevoTurnoModal({ onClose, onSuccess }: Props) {
         empleado_id: form.empleado_id,
         servicio_id: form.servicio_id,
         fecha: form.fecha,
-        hora: form.hora,
         inicio_minutos: inicio,
         fin_minutos: inicio + duracion,
         duracion_minutos: duracion,
@@ -89,7 +88,7 @@ export function NuevoTurnoModal({ onClose, onSuccess }: Props) {
       onSuccess();
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : JSON.stringify(err));
+      setError(err instanceof Error ? err.message : 'No se pudo guardar el turno.');
     } finally {
       setSaving(false);
     }
