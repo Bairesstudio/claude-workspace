@@ -16,7 +16,7 @@ export function Sidebar() {
   return (
     <>
       {/* Desktop: sidebar fija a la izquierda */}
-      <aside className="hidden h-full w-56 flex-col border-r border-gray-200 bg-white md:flex">
+      <aside className="hidden h-full w-56 flex-col border-r border-gray-200 bg-white lg:flex">
         <div className="px-6 py-6">
           <p className="text-lg font-semibold text-gray-900">{role === 'admin' ? 'Baires Studio' : (negocioNombre || '—')}</p>
           <p className="text-sm text-gray-500">{role === 'admin' ? 'Panel admin' : 'Panel de turnos'}</p>
@@ -52,7 +52,7 @@ export function Sidebar() {
       </aside>
 
       {/* Mobile: barra superior + tabs inferiores */}
-      <header className="flex items-center justify-between border-b border-gray-200 bg-white px-4 py-3 md:hidden">
+      <header className="flex items-center justify-between border-b border-gray-200 bg-white px-4 py-3 lg:hidden">
         <p className="text-base font-semibold text-gray-900">{role === 'admin' ? 'Baires Studio' : (negocioNombre || '—')}</p>
         <button
           onClick={signOut}
@@ -62,7 +62,7 @@ export function Sidebar() {
           <LogOut size={20} aria-hidden="true" />
         </button>
       </header>
-      <nav className="fixed inset-x-0 bottom-0 z-10 flex border-t border-gray-200 bg-white pb-[env(safe-area-inset-bottom)] md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-10 flex border-t border-gray-200 bg-white pb-[env(safe-area-inset-bottom)] lg:hidden">
         {links.map(({ to, label, icon: Icon }) => (
           <NavLink
             key={to}
