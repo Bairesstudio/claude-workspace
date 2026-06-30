@@ -141,7 +141,8 @@ export function NuevoTurnoModal({ onClose, onSuccess }: Props) {
                       type="tel"
                       inputMode="numeric"
                       value={form.telefono}
-                      onChange={e => setForm(f => ({ ...f, telefono: e.target.value.replace(/\D/g, '') }))}
+                      maxLength={10}
+                      onChange={e => setForm(f => ({ ...f, telefono: e.target.value.replace(/\D/g, '').slice(0, 10) }))}
                       placeholder="1123456789"
                       className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
                     />
