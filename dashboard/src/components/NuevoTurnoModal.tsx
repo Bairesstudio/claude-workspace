@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { supabase, getClienteId } from '../lib/supabase';
+import { useToast } from './ToastContext';
 
 interface Servicio { id: string; nombre: string; duracion_minutos: number; }
 interface Empleado { id: string; nombre: string; }
@@ -98,6 +99,7 @@ export function NuevoTurnoModal({ onClose, onSuccess }: Props) {
   const [loadingDatos, setLoadingDatos] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { showToast } = useToast();
 
   const [form, setForm] = useState({
     nombre_cliente: '',
@@ -168,6 +170,7 @@ export function NuevoTurnoModal({ onClose, onSuccess }: Props) {
       });
 
       if (err) throw err;
+      showToast('Turno guardado correctamente');
       onSuccess();
       onClose();
     } catch (err) {
