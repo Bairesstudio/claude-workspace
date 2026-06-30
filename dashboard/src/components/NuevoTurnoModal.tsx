@@ -24,7 +24,7 @@ export function NuevoTurnoModal({ onClose, onSuccess }: Props) {
 
   const [form, setForm] = useState({
     nombre_cliente: '',
-    email: '',
+    telefono: '',
     mascota_nombre: '',
     mascota_raza: '',
     servicio_id: '',
@@ -80,7 +80,7 @@ export function NuevoTurnoModal({ onClose, onSuccess }: Props) {
         duracion_minutos: duracion,
         estado: 'confirmado',
         precio_servicio: precio,
-        email: form.email.trim() || '',
+        email: form.telefono.trim() || '',
         nombre_cliente: form.nombre_cliente.trim(),
         mascota_nombre: form.mascota_nombre.trim(),
         mascota_raza: form.mascota_raza.trim() || 'Sin especificar',
@@ -136,12 +136,13 @@ export function NuevoTurnoModal({ onClose, onSuccess }: Props) {
                     />
                   </div>
                   <div>
-                    <label className="mb-1 block text-sm font-medium text-gray-700">Email <span className="font-normal text-gray-400">(opcional)</span></label>
+                    <label className="mb-1 block text-sm font-medium text-gray-700">Teléfono <span className="font-normal text-gray-400">(opcional)</span></label>
                     <input
-                      type="email"
-                      value={form.email}
-                      onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
-                      placeholder="juan@email.com"
+                      type="tel"
+                      inputMode="numeric"
+                      value={form.telefono}
+                      onChange={e => setForm(f => ({ ...f, telefono: e.target.value.replace(/\D/g, '') }))}
+                      placeholder="1123456789"
                       className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
                     />
                   </div>
