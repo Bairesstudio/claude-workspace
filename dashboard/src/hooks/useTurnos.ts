@@ -7,6 +7,7 @@ interface UseTurnosResult {
   loading: boolean;
   error: string | null;
   refetch: () => void;
+  removeTurno: (id: string) => void;
 }
 
 function minutosAHora(minutos: number): string {
@@ -61,5 +62,9 @@ export function useTurnos(): UseTurnosResult {
     fetchTurnos();
   }, [fetchTurnos]);
 
-  return { turnos, loading, error, refetch: fetchTurnos };
+  const removeTurno = useCallback((id: string) => {
+    setTurnos(prev => prev.filter(t => t.id !== id));
+  }, []);
+
+  return { turnos, loading, error, refetch: fetchTurnos, removeTurno };
 }

@@ -11,7 +11,7 @@ import { NuevoTurnoModal } from '../components/NuevoTurnoModal';
 import type { TurnoConNombres } from '../types';
 
 export function Hoy() {
-  const { turnos, loading, error, refetch } = useTurnos();
+  const { turnos, loading, error, refetch, removeTurno } = useTurnos();
   const [cancelando, setCancelando] = useState<TurnoConNombres | null>(null);
   const [reprogramando, setReprogramando] = useState<TurnoConNombres | null>(null);
   const [nuevoTurno, setNuevoTurno] = useState(false);
@@ -69,7 +69,7 @@ export function Hoy() {
         <CancelarModal
           turno={cancelando}
           onClose={() => setCancelando(null)}
-          onSuccess={refetch}
+          onSuccess={() => { removeTurno(cancelando.id); refetch(); }}
         />
       )}
       {reprogramando && (
