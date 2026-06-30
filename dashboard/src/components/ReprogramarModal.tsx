@@ -68,7 +68,7 @@ export function ReprogramarModal({ turno, onClose, onSuccess }: ReprogramarModal
   async function handleConfirm() {
     setLoading(true);
     setError(null);
-    const res = await modificarTurno(turno.id, fecha, hora);
+    const res = await modificarTurno(turno.id, fecha, hora, turno.duracion_minutos);
     setLoading(false);
     if (res.ok) {
       showToast('Turno reprogramado correctamente.');

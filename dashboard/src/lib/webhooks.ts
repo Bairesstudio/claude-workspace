@@ -26,10 +26,23 @@ export async function cancelarTurno(turnoId: string): Promise<WebhookResponse> {
   return { ok: true, message: 'Turno cancelado.' };
 }
 
-export function modificarTurno(
+export async function modificarTurno(
   turnoId: string,
   fecha: string,
   hora: string,
+  duracionMinutos: number,
 ): Promise<WebhookResponse> {
-  return postWebhook('pajaro-loco-modificar-turno', { turno_id: turnoId, fecha, hora });
+  const [h, m] = hora.split(':').map(Number);
+  const inicioMinutos = h * 60 + m;
+  const { error } = await supabase
+    .from('turnos')
+    .update({
+      fecha,
+      inicio_minutos: inicioMinutos,
+      fin_minutos: inicioMinutos + duracionMinutos,
+    })
+    .eq('id', turnoId)
+    .select('id');
+  if (error) return { ok: false, message: 'No se pudo reprogramar el turno.' };
+  return { ok: true, message: 'Turno reprogramado.' };
 }
