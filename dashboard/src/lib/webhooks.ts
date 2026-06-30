@@ -1,4 +1,5 @@
 import type { WebhookResponse } from '../types';
+import { supabase } from './supabase';
 
 const BASE_URL = import.meta.env.VITE_N8N_BASE_URL as string;
 
@@ -16,8 +17,13 @@ async function postWebhook(path: string, body: unknown): Promise<WebhookResponse
   }
 }
 
-export function cancelarTurno(turnoId: string): Promise<WebhookResponse> {
-  return postWebhook('pajaro-loco-cancelar-turno', { turno_id: turnoId });
+export async function cancelarTurno(turnoId: string): Promise<WebhookResponse> {
+  const { error } = await supabase
+    .from('turnos')
+    .update({ estado: 'cancelado' })
+    .eq('id', turnoId);
+  if (error) return { ok: false, message: 'No se pudo cancelar el turno.' };
+  return { ok: true, message: 'Turno cancelado.' };
 }
 
 export function modificarTurno(
