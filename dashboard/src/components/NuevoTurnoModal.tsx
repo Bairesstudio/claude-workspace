@@ -4,6 +4,37 @@ import { supabase, getClienteId } from '../lib/supabase';
 
 interface Servicio { id: string; nombre: string; duracion_minutos: number; }
 interface Empleado { id: string; nombre: string; }
+interface HorarioEmpleado {
+  empleado_id: string;
+  fecha_referencia: string;
+  dias_semana_a: string[];
+  dias_semana_b: string[];
+}
+
+const JS_DIA: Record<number, string> = {
+  0: 'domingo', 1: 'lunes', 2: 'martes', 3: 'miercoles',
+  4: 'jueves', 5: 'viernes', 6: 'sabado',
+};
+
+function esSemanaA(fechaISO: string, fechaReferenciaISO: string): boolean {
+  const ref = new Date(fechaReferenciaISO + 'T00:00:00');
+  const target = new Date(fechaISO + 'T00:00:00');
+  const diffDias = Math.round((target.getTime() - ref.getTime()) / (24 * 60 * 60 * 1000));
+  const diffSemanas = Math.floor(diffDias / 7);
+  return diffSemanas % 2 === 0;
+}
+
+function validarDiaHorario(fechaISO: string, horario: HorarioEmpleado): string | null {
+  const fecha = new Date(fechaISO + 'T00:00:00');
+  const diaNombre = JS_DIA[fecha.getDay()];
+  const semanaA = esSemanaA(fechaISO, horario.fecha_referencia);
+  const diasDisponibles = semanaA ? horario.dias_semana_a : horario.dias_semana_b;
+  if (!diasDisponibles.includes(diaNombre)) {
+    const semanaLabel = semanaA ? 'A' : 'B';
+    return `Este empleado no trabaja los ${diaNombre}s (Semana ${semanaLabel})`;
+  }
+  return null;
+}
 
 interface Props {
   onClose: () => void;
@@ -63,6 +94,7 @@ const formatoPrecio = new Intl.NumberFormat('es-AR', { style: 'currency', curren
 export function NuevoTurnoModal({ onClose, onSuccess }: Props) {
   const [servicios, setServicios] = useState<Servicio[]>([]);
   const [empleados, setEmpleados] = useState<Empleado[]>([]);
+  const [horarios, setHorarios] = useState<Record<string, HorarioEmpleado>>({});
   const [loadingDatos, setLoadingDatos] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -82,12 +114,16 @@ export function NuevoTurnoModal({ onClose, onSuccess }: Props) {
   useEffect(() => {
     async function cargarDatos() {
       const clienteId = await getClienteId();
-      const [{ data: svcs }, { data: emps }] = await Promise.all([
+      const [{ data: svcs }, { data: emps }, { data: hors }] = await Promise.all([
         supabase.from('servicios').select('id, nombre, duracion_minutos').eq('cliente_id', clienteId).eq('activo', true).order('nombre'),
         supabase.from('empleados').select('id, nombre').eq('cliente_id', clienteId).eq('activo', true).order('nombre'),
+        supabase.from('horarios_empleado').select('empleado_id, fecha_referencia, dias_semana_a, dias_semana_b'),
       ]);
       setServicios(svcs ?? []);
       setEmpleados(emps ?? []);
+      const horariosMap: Record<string, HorarioEmpleado> = {};
+      for (const h of hors ?? []) horariosMap[h.empleado_id] = h;
+      setHorarios(horariosMap);
       if (emps && emps.length > 0) setForm(f => ({ ...f, empleado_id: emps[0].id }));
       setLoadingDatos(false);
     }
@@ -302,6 +338,15 @@ export function NuevoTurnoModal({ onClose, onSuccess }: Props) {
                   </div>
                 </div>
               </div>
+
+              {form.empleado_id && form.fecha && horarios[form.empleado_id] && (() => {
+                const aviso = validarDiaHorario(form.fecha, horarios[form.empleado_id]);
+                return aviso ? (
+                  <p className="rounded-lg bg-yellow-50 border border-yellow-200 px-3 py-2 text-sm text-yellow-700">
+                    ⚠️ {aviso}
+                  </p>
+                ) : null;
+              })()}
 
               {error && (
                 <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>
