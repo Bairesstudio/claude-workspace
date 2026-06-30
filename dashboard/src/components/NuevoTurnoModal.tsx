@@ -108,7 +108,7 @@ export function NuevoTurnoModal({ onClose, onSuccess }: Props) {
     peso_idx: 0,
     empleado_id: '',
     fecha: new Date().toISOString().slice(0, 10),
-    hora: '09:00',
+    hora: '09:30',
   });
 
   useEffect(() => {
@@ -327,13 +327,20 @@ export function NuevoTurnoModal({ onClose, onSuccess }: Props) {
                     </div>
                     <div>
                       <label className="mb-1 block text-sm font-medium text-gray-700">Hora</label>
-                      <input
+                      <select
                         required
-                        type="time"
                         value={form.hora}
                         onChange={e => setForm(f => ({ ...f, hora: e.target.value }))}
                         className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
-                      />
+                      >
+                        {Array.from({ length: 18 }, (_, i) => {
+                          const totalMinutos = 9 * 60 + 30 + i * 30;
+                          const h = Math.floor(totalMinutos / 60).toString().padStart(2, '0');
+                          const m = (totalMinutos % 60).toString().padStart(2, '0');
+                          const valor = `${h}:${m}`;
+                          return <option key={valor} value={valor}>{valor}</option>;
+                        })}
+                      </select>
                     </div>
                   </div>
                 </div>
