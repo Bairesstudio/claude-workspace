@@ -27,7 +27,6 @@ export function NuevoTurnoModal({ onClose, onSuccess }: Props) {
     email: '',
     mascota_nombre: '',
     mascota_raza: '',
-    mascota_tamano: 'chico',
     servicio_id: '',
     empleado_id: '',
     fecha: new Date().toISOString().slice(0, 10),
@@ -51,6 +50,11 @@ export function NuevoTurnoModal({ onClose, onSuccess }: Props) {
   }, []);
 
   const servicioSeleccionado = servicios.find(s => s.id === form.servicio_id);
+
+  // Muestra una sola entrada por nombre de servicio (evita duplicados de "Corte de uñas" por tamaño)
+  const serviciosUnicos = servicios.filter((s, i, arr) =>
+    arr.findIndex(x => x.nombre === s.nombre) === i
+  );
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -80,7 +84,7 @@ export function NuevoTurnoModal({ onClose, onSuccess }: Props) {
         nombre_cliente: form.nombre_cliente.trim(),
         mascota_nombre: form.mascota_nombre.trim(),
         mascota_raza: form.mascota_raza.trim() || 'Sin especificar',
-        mascota_tamano: form.mascota_tamano,
+        mascota_tamano: servicioSeleccionado?.tamano ?? 'sin especificar',
         calendar_event_id: null,
       });
 
@@ -158,29 +162,15 @@ export function NuevoTurnoModal({ onClose, onSuccess }: Props) {
                       className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="mb-1 block text-sm font-medium text-gray-700">Raza</label>
-                      <input
-                        type="text"
-                        value={form.mascota_raza}
-                        onChange={e => setForm(f => ({ ...f, mascota_raza: e.target.value }))}
-                        placeholder="Labrador"
-                        className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
-                      />
-                    </div>
-                    <div>
-                      <label className="mb-1 block text-sm font-medium text-gray-700">Tamaño</label>
-                      <select
-                        value={form.mascota_tamano}
-                        onChange={e => setForm(f => ({ ...f, mascota_tamano: e.target.value }))}
-                        className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
-                      >
-                        <option value="chico">Chico</option>
-                        <option value="mediano">Mediano</option>
-                        <option value="grande">Grande</option>
-                      </select>
-                    </div>
+                  <div>
+                    <label className="mb-1 block text-sm font-medium text-gray-700">Raza <span className="font-normal text-gray-400">(opcional)</span></label>
+                    <input
+                      type="text"
+                      value={form.mascota_raza}
+                      onChange={e => setForm(f => ({ ...f, mascota_raza: e.target.value }))}
+                      placeholder="Labrador"
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                    />
                   </div>
                 </div>
               </div>
@@ -195,7 +185,7 @@ export function NuevoTurnoModal({ onClose, onSuccess }: Props) {
                       onChange={e => setForm(f => ({ ...f, servicio_id: e.target.value }))}
                       className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
                     >
-                      {servicios.map(s => (
+                      {serviciosUnicos.map(s => (
                         <option key={s.id} value={s.id}>
                           {s.nombre}{s.tamano ? ` (${s.tamano})` : ''} — ${Number(s.precio).toLocaleString('es-AR')}
                         </option>
