@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { supabase, getClienteId } from '../lib/supabase';
 
-interface Servicio { id: string; nombre: string; precio: number; duracion_minutos: number; tamano: string | null; }
+interface Servicio { id: string; nombre: string; duracion_minutos: number; }
 interface Empleado { id: string; nombre: string; }
 
 interface Props {
@@ -10,10 +10,55 @@ interface Props {
   onSuccess: () => void;
 }
 
+const CATALOGO = [
+  {
+    tipo: 'Baño',
+    pesos: [
+      { label: 'Hasta 4 kg',    precio: 18000 },
+      { label: 'Hasta 10 kg',   precio: 20000 },
+      { label: 'Hasta 20 kg',   precio: 23000 },
+      { label: 'Hasta 30 kg',   precio: 30000 },
+      { label: 'Más de 30 kg',  precio: 40000 },
+    ],
+  },
+  {
+    tipo: 'Baño + Corte',
+    pesos: [
+      { label: 'Hasta 4 kg',    precio: 25000 },
+      { label: 'Hasta 10 kg',   precio: 28000 },
+      { label: 'Hasta 20 kg',   precio: 31000 },
+      { label: 'Hasta 30 kg',   precio: 35000 },
+      { label: 'Más de 30 kg',  precio: 45000 },
+    ],
+  },
+  {
+    tipo: 'Baño (Gatos)',
+    pesos: [{ label: 'Precio fijo', precio: 25000 }],
+  },
+  {
+    tipo: 'Corte de uñas',
+    pesos: [{ label: 'Precio fijo', precio: 6000 }],
+  },
+];
+
 function horaAMinutos(hora: string): number {
   const [h, m] = hora.split(':').map(Number);
   return h * 60 + m;
 }
+
+function resolverServicioId(tipo: string, servicios: Servicio[]): string {
+  const t = tipo.toLowerCase();
+  const match = servicios.find(s => {
+    const n = s.nombre.toLowerCase();
+    if (t.includes('uña'))  return n.includes('uña');
+    if (t.includes('gato')) return n.includes('gato');
+    if (t.includes('corte')) return n.includes('corte') && !n.includes('uña');
+    return n.includes('baño') && !n.includes('corte') && !n.includes('gato');
+  });
+  return match?.id ?? servicios[0]?.id ?? '';
+}
+
+const formatoPrecio = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 });
 
 export function NuevoTurnoModal({ onClose, onSuccess }: Props) {
   const [servicios, setServicios] = useState<Servicio[]>([]);
@@ -27,7 +72,8 @@ export function NuevoTurnoModal({ onClose, onSuccess }: Props) {
     telefono: '',
     mascota_nombre: '',
     mascota_raza: '',
-    servicio_id: '',
+    tipo_servicio: CATALOGO[0].tipo,
+    peso_idx: 0,
     empleado_id: '',
     fecha: new Date().toISOString().slice(0, 10),
     hora: '09:00',
@@ -37,54 +83,51 @@ export function NuevoTurnoModal({ onClose, onSuccess }: Props) {
     async function cargarDatos() {
       const clienteId = await getClienteId();
       const [{ data: svcs }, { data: emps }] = await Promise.all([
-        supabase.from('servicios').select('id, nombre, precio, duracion_minutos, tamano').eq('cliente_id', clienteId).eq('activo', true).order('nombre'),
+        supabase.from('servicios').select('id, nombre, duracion_minutos').eq('cliente_id', clienteId).eq('activo', true).order('nombre'),
         supabase.from('empleados').select('id, nombre').eq('cliente_id', clienteId).eq('activo', true).order('nombre'),
       ]);
       setServicios(svcs ?? []);
       setEmpleados(emps ?? []);
-      if (svcs && svcs.length > 0) setForm(f => ({ ...f, servicio_id: svcs[0].id }));
       if (emps && emps.length > 0) setForm(f => ({ ...f, empleado_id: emps[0].id }));
       setLoadingDatos(false);
     }
     cargarDatos();
   }, []);
 
-  const servicioSeleccionado = servicios.find(s => s.id === form.servicio_id);
-
-  // Muestra una sola entrada por nombre de servicio (evita duplicados de "Corte de uñas" por tamaño)
-  const serviciosUnicos = servicios.filter((s, i, arr) =>
-    arr.findIndex(x => x.nombre === s.nombre) === i
-  );
+  const catalogoActual = CATALOGO.find(c => c.tipo === form.tipo_servicio) ?? CATALOGO[0];
+  const pesoActual = catalogoActual.pesos[form.peso_idx] ?? catalogoActual.pesos[0];
+  const precioBonito = formatoPrecio.format(pesoActual.precio);
+  const esPrecioFijo = catalogoActual.pesos.length === 1;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!form.nombre_cliente.trim() || !form.mascota_nombre.trim()) return;
-    if (!form.servicio_id || !form.empleado_id) return;
+    if (!form.empleado_id) return;
 
     setSaving(true);
     setError(null);
 
     try {
       const clienteId = await getClienteId();
+      const servicioId = resolverServicioId(form.tipo_servicio, servicios);
+      const duracion = servicios.find(s => s.id === servicioId)?.duracion_minutos ?? 60;
       const inicio = horaAMinutos(form.hora);
-      const duracion = servicioSeleccionado?.duracion_minutos ?? 60;
-      const precio = servicioSeleccionado?.precio ?? 0;
 
       const { error: err } = await supabase.from('turnos').insert({
         cliente_id: clienteId,
         empleado_id: form.empleado_id,
-        servicio_id: form.servicio_id,
+        servicio_id: servicioId,
         fecha: form.fecha,
         inicio_minutos: inicio,
         fin_minutos: inicio + duracion,
         duracion_minutos: duracion,
         estado: 'confirmado',
-        precio_servicio: precio,
+        precio_servicio: pesoActual.precio,
         email: form.telefono.trim() || '',
         nombre_cliente: form.nombre_cliente.trim(),
         mascota_nombre: form.mascota_nombre.trim(),
         mascota_raza: form.mascota_raza.trim() || 'Sin especificar',
-        mascota_tamano: servicioSeleccionado?.tamano ?? 'sin especificar',
+        mascota_tamano: esPrecioFijo ? 'sin especificar' : pesoActual.label.toLowerCase(),
         calendar_event_id: null,
       });
 
@@ -121,6 +164,7 @@ export function NuevoTurnoModal({ onClose, onSuccess }: Props) {
           <form onSubmit={handleSubmit} className="max-h-[80vh] overflow-y-auto">
             <div className="space-y-5 px-5 py-4">
 
+              {/* Dueño */}
               <div>
                 <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">Dueño</p>
                 <div className="space-y-3">
@@ -150,6 +194,7 @@ export function NuevoTurnoModal({ onClose, onSuccess }: Props) {
                 </div>
               </div>
 
+              {/* Mascota */}
               <div>
                 <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">Mascota</p>
                 <div className="space-y-3">
@@ -177,23 +222,48 @@ export function NuevoTurnoModal({ onClose, onSuccess }: Props) {
                 </div>
               </div>
 
+              {/* Turno */}
               <div>
                 <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">Turno</p>
                 <div className="space-y-3">
+
+                  {/* Tipo de servicio */}
                   <div>
                     <label className="mb-1 block text-sm font-medium text-gray-700">Servicio</label>
                     <select
-                      value={form.servicio_id}
-                      onChange={e => setForm(f => ({ ...f, servicio_id: e.target.value }))}
+                      value={form.tipo_servicio}
+                      onChange={e => setForm(f => ({ ...f, tipo_servicio: e.target.value, peso_idx: 0 }))}
                       className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
                     >
-                      {serviciosUnicos.map(s => (
-                        <option key={s.id} value={s.id}>
-                          {s.nombre}{s.tamano ? ` (${s.tamano})` : ''} — ${Number(s.precio).toLocaleString('es-AR')}
-                        </option>
+                      {CATALOGO.map(c => (
+                        <option key={c.tipo} value={c.tipo}>{c.tipo}</option>
                       ))}
                     </select>
                   </div>
+
+                  {/* Peso / precio — solo si tiene variantes */}
+                  {!esPrecioFijo ? (
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-gray-700">Peso del animal</label>
+                      <select
+                        value={form.peso_idx}
+                        onChange={e => setForm(f => ({ ...f, peso_idx: Number(e.target.value) }))}
+                        className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                      >
+                        {catalogoActual.pesos.map((p, i) => (
+                          <option key={i} value={i}>{p.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                  ) : null}
+
+                  {/* Precio resultante */}
+                  <div className="flex items-center justify-between rounded-lg bg-primary-light px-4 py-2.5">
+                    <span className="text-sm font-medium text-primary-dark">Precio</span>
+                    <span className="text-base font-bold text-primary-dark">{precioBonito}</span>
+                  </div>
+
+                  {/* Empleado */}
                   <div>
                     <label className="mb-1 block text-sm font-medium text-gray-700">Empleado</label>
                     <select
@@ -206,6 +276,8 @@ export function NuevoTurnoModal({ onClose, onSuccess }: Props) {
                       ))}
                     </select>
                   </div>
+
+                  {/* Fecha y hora */}
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="mb-1 block text-sm font-medium text-gray-700">Fecha</label>
