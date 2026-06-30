@@ -17,7 +17,8 @@ export interface Turno {
   duracion_minutos: number;
   estado: 'confirmado' | 'cancelado';
   precio_servicio: number;
-  email: string;
+  email: string | null;
+  telefono: string | null;
   nombre_cliente: string;
   mascota_nombre: string;
   mascota_raza: string;

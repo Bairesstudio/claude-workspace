@@ -161,7 +161,7 @@ export function NuevoTurnoModal({ onClose, onSuccess }: Props) {
         duracion_minutos: duracion,
         estado: 'confirmado',
         precio_servicio: pesoActual.precio,
-        email: form.telefono.trim() || '',
+        telefono: form.telefono.trim() || null,
         nombre_cliente: form.nombre_cliente.trim(),
         mascota_nombre: form.mascota_nombre.trim(),
         mascota_raza: form.mascota_raza.trim() || 'Sin especificar',
