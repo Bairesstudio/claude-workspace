@@ -108,7 +108,7 @@ export function NuevoTurnoModal({ onClose, onSuccess }: Props) {
     peso_idx: 0,
     empleado_id: '',
     fecha: new Date().toISOString().slice(0, 10),
-    hora: '09:30',
+    hora: '09:00',
   });
 
   useEffect(() => {
@@ -327,20 +327,30 @@ export function NuevoTurnoModal({ onClose, onSuccess }: Props) {
                     </div>
                     <div>
                       <label className="mb-1 block text-sm font-medium text-gray-700">Hora</label>
-                      <select
-                        required
-                        value={form.hora}
-                        onChange={e => setForm(f => ({ ...f, hora: e.target.value }))}
-                        className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
-                      >
-                        {Array.from({ length: 18 }, (_, i) => {
-                          const totalMinutos = 9 * 60 + 30 + i * 30;
-                          const h = Math.floor(totalMinutos / 60).toString().padStart(2, '0');
-                          const m = (totalMinutos % 60).toString().padStart(2, '0');
-                          const valor = `${h}:${m}`;
-                          return <option key={valor} value={valor}>{valor}</option>;
-                        })}
-                      </select>
+                      <div className="grid grid-cols-2 gap-2">
+                        <select
+                          value={form.hora.split(':')[0]}
+                          onChange={e => {
+                            const h = e.target.value;
+                            const m = h === '18' ? '00' : form.hora.split(':')[1];
+                            setForm(f => ({ ...f, hora: `${h}:${m}` }));
+                          }}
+                          className="rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                        >
+                          {[9,10,11,12,13,14,15,16,17,18].map(h => (
+                            <option key={h} value={h.toString().padStart(2,'0')}>{h.toString().padStart(2,'0')}hs</option>
+                          ))}
+                        </select>
+                        <select
+                          value={form.hora.split(':')[1]}
+                          disabled={form.hora.split(':')[0] === '18'}
+                          onChange={e => setForm(f => ({ ...f, hora: `${f.hora.split(':')[0]}:${e.target.value}` }))}
+                          className="rounded-lg border border-gray-300 px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:bg-gray-100"
+                        >
+                          <option value="00">:00</option>
+                          <option value="30">:30</option>
+                        </select>
+                      </div>
                     </div>
                   </div>
                 </div>
